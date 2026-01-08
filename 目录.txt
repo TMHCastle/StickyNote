@@ -1,0 +1,133 @@
+floating_log_app/
+│
+├─ pubspec.yaml                 # Flutter 依赖管理
+├─ README.md
+├─ windows/                     # Windows 构建文件夹（Flutter 自动生成）
+│
+├─ lib/
+│   ├─ main.dart                # 项目入口
+│   ├─ app.dart                 # MaterialApp 或顶层路由配置
+│   ├─ models/
+│   │   └─ log_entry.dart       # 日志数据模型
+│   │
+│   ├─ pages/
+│   │   ├─ floating_overlay.dart # 悬浮窗口界面
+│   │   └─ edit_page.dart        # 编辑页面
+│   │
+│   ├─ providers/
+│   │   └─ log_provider.dart    # 状态管理（悬浮窗口和编辑页面共享数据）
+│   │
+│   ├─ widgets/
+│   │   ├─ log_item_widget.dart  # 日志条目显示
+│   │   └─ floating_control_button.dart # 悬浮按钮控件
+│   │
+│   ├─ utils/
+│   │   ├─ storage_util.dart    # 本地存储读写（Hive/JSON）
+│   │   └─ window_util.dart     # Windows API 调用（点击穿透/透明度等）
+│
+└─ assets/
+    ├─ icons/
+    │   └─ control_icon.png     # 悬浮按钮图标
+    └─ fonts/
+        └─ # 可选字体
+
+
+
+1. main.dart
+
+初始化 Flutter
+
+初始化 window_manager 插件（半透明 + Always-on-top）
+
+初始化 Hive/本地存储
+
+加载顶层 Widget（app.dart）
+
+2. app.dart
+
+MaterialApp 或 WidgetsApp
+
+路由配置：
+
+/ → 悬浮窗口 FloatingOverlay
+
+/edit → 编辑页面 EditPage
+
+3. models/log_entry.dart
+class LogEntry {
+  String id;
+  String title;
+  bool done;
+
+  LogEntry({required this.id, required this.title, this.done = false});
+
+  Map<String, dynamic> toJson() => {'id': id, 'title': title, 'done': done};
+  factory LogEntry.fromJson(Map<String, dynamic> json) =>
+      LogEntry(id: json['id'], title: json['title'], done: json['done']);
+}
+
+4. providers/log_provider.dart
+
+管理日志列表状态（ChangeNotifier）
+
+编辑页面/悬浮窗口共享
+
+更新后调用 notifyListeners() 更新 UI
+
+5. pages/floating_overlay.dart
+
+半透明窗口
+
+ListView 显示日志条目
+
+悬浮按钮控制：
+
+透明度滑块
+
+点击穿透切换（调用 window_util.dart）
+
+6. pages/edit_page.dart
+
+日志编辑界面
+
+添加/删除/修改日志
+
+修改实时同步到 log_provider → 悬浮窗口
+
+7. widgets/log_item_widget.dart
+
+单条日志条目显示
+
+勾选框 + 文本
+
+完成任务可淡化或划线显示
+
+8. widgets/floating_control_button.dart
+
+悬浮按钮组件
+
+支持拖动 + 点击
+
+打开编辑页面/切换点击穿透/调整透明度
+
+9. utils/storage_util.dart
+
+封装本地数据存储
+
+读取/写入 JSON 或 Hive
+
+10. utils/window_util.dart
+
+Windows API 调用：
+
+设置点击穿透（WS_EX_TRANSPARENT）
+
+设置透明度
+
+可通过 ffi 调用 Win32 API
+
+11. assets/
+
+图标、字体资源
+
+控制按钮图标放在 icons/ 方便悬浮窗口使用
