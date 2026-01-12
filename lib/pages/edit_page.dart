@@ -1,4 +1,3 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -28,29 +27,6 @@ class _EditPageState extends State<EditPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(editingId == null ? "编辑日志" : "修改日志"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.image),
-            tooltip: "设置背景图片",
-            onPressed: () async {
-              FilePickerResult? result = await FilePicker.platform.pickFiles(
-                type: FileType.image,
-              );
-              if (result != null) {
-                provider.setBackgroundImage(result.files.single.path);
-              } else {
-                // User canceled the picker
-                // Optional: provider.setBackgroundImage(null); // to clear?
-                // Let's add a dialog or long press to clear.
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.cleaning_services),
-            tooltip: "清除背景",
-            onPressed: () => provider.setBackgroundImage(null),
-          )
-        ],
       ),
       body: Column(
         children: [
@@ -196,38 +172,7 @@ class _EditPageState extends State<EditPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text("全局背景色", style: TextStyle(fontSize: 12)),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () async {
-                        final Color newColor = await showColorPickerDialog(
-                          context,
-                          Color(provider.layoutBackgroundColor),
-                          title: Text("全局背景色"),
-                          width: 40, height: 40, spacing: 0, runSpacing: 0,
-                          borderRadius: 0,
-                          wheelDiameter: 165,
-                          enableOpacity:
-                              false, // Base color usually opaque, alpha handled by slider
-                        );
-                        provider.setLayoutBackgroundColor(newColor.value);
-                      },
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        decoration: BoxDecoration(
-                          color: Color(provider.layoutBackgroundColor),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
+                // Global settings moved to SettingsPage
               ],
             ),
           ),

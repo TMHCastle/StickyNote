@@ -57,7 +57,6 @@ class _FloatingOverlayState extends State<FloatingOverlay> with WindowListener {
       body: Stack(
         children: [
           // 1. Background Layer (Image + Color)
-          // Controllable by bgOpacity and layoutBackgroundColor
           Positioned.fill(
             child: GestureDetector(
               onPanStart: (details) => windowManager.startDragging(),
@@ -82,53 +81,79 @@ class _FloatingOverlayState extends State<FloatingOverlay> with WindowListener {
           ),
 
           // 2. Content Layer
-          // Controllable by textOpacity (Entire content opacity)
-          Opacity(
-            opacity: provider.textOpacity,
-            child: Column(
-              children: [
-                // Header / Lock Button area
-                Padding(
+          Column(
+            children: [
+              // Header Row (Control Opacity Applied)
+              Opacity(
+                opacity: provider.controlOpacity,
+                child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Row(
                     children: [
-                      // Top-Left Lock Button
+                      // Lock Button
                       IconButton(
                         icon: Icon(
                           provider.clickThrough ? Icons.lock : Icons.lock_open,
                           color: Colors.white.withOpacity(0.8),
                           size: 20,
                         ),
-                        onPressed: () => provider.toggleClickThrough(),
-                        tooltip: "点击锁定。点击任务栏图标解锁。",
+                        // Only "Locking" can be done here. Unlocking is via Taskbar.
+                        onPressed: () {
+                          if (!provider.clickThrough) {
+                            provider.toggleClickThrough();
+                          }
+                        },
+                        tooltip: provider.clickThrough
+                            ? "当前已锁定(穿透)。点击底部任务栏图标解锁。"
+                            : "点击锁定(开启穿透)",
                       ),
                       const Spacer(),
+                      // Settings Button
+                      IconButton(
+                        icon: Icon(Icons.settings,
+                            color: Colors.white.withOpacity(0.8), size: 20),
+                        onPressed: () {
+                          if (!provider.clickThrough) {
+                            Navigator.pushNamed(context, '/settings');
+                          }
+                        },
+                        tooltip: "设置",
+                      ),
                     ],
                   ),
                 ),
+              ),
 
-                // Scrollable Notes List
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    children: [
-                      ...logs.map((log) => GestureDetector(
-                            onTap: () {
+              // Scrollable Notes List (NO Opacity Applied - Always Visible)
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  children: [
+                    ...logs.map((log) => GestureDetector(
+                          onTap: () {
+                            if (!provider.clickThrough) {
                               Navigator.pushNamed(context, '/edit');
-                            },
-                            child: LogItemWidget(log: log),
-                          )),
-                    ],
-                  ),
+                            }
+                          },
+                          child: LogItemWidget(log: log),
+                        )),
+                  ],
                 ),
+              ),
 
-                const SizedBox(height: 8),
+              const SizedBox(height: 8),
 
-                // Edit Button Centered
-                Center(
+              // Edit Button Centered (Control Opacity Applied)
+              Opacity(
+                opacity: provider.controlOpacity,
+                child: Center(
                   child: TextButton.icon(
-                    onPressed: () => Navigator.pushNamed(context, '/edit'),
+                    onPressed: () {
+                      if (!provider.clickThrough) {
+                        Navigator.pushNamed(context, '/edit');
+                      }
+                    },
                     icon: const Icon(Icons.edit, color: Colors.white, size: 16),
                     label:
                         const Text("编辑", style: TextStyle(color: Colors.white)),
@@ -139,58 +164,10 @@ class _FloatingOverlayState extends State<FloatingOverlay> with WindowListener {
                     ),
                   ),
                 ),
-
-                // Control Panel (Bottom)
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.4),
-                    borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(12)),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          const Text("底色",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 10)),
-                          Expanded(
-                            child: Slider(
-                              value: provider.bgOpacity,
-                              min: 0.0,
-                              max: 1.0,
-                              activeColor: Colors.white,
-                              inactiveColor: Colors.white24,
-                              onChanged: (val) => provider.setBgOpacity(val),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          const Text("整体",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 10)),
-                          Expanded(
-                            child: Slider(
-                              value: provider.textOpacity,
-                              min:
-                                  0.2, // min opacity to avoid complete invisible
-                              max: 1.0,
-                              activeColor: Colors.white,
-                              inactiveColor: Colors.white24,
-                              onChanged: (val) => provider.setTextOpacity(val),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                )
-              ],
-            ),
+              ),
+              const SizedBox(height: 8),
+              // Removed Bottom Control Panel
+            ],
           ),
         ],
       ),

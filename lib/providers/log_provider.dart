@@ -54,8 +54,11 @@ class LogProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  double _textOpacity = 1.0;
-  double get textOpacity => _textOpacity;
+  double _controlOpacity = 1.0;
+  double get controlOpacity => _controlOpacity;
+
+  double _fontSize = 14.0;
+  double get fontSize => _fontSize;
 
   double _bgOpacity = 0.5;
   double get bgOpacity => _bgOpacity;
@@ -72,8 +75,13 @@ class LogProvider extends ChangeNotifier {
   bool _clickThrough = false;
   bool get clickThrough => _clickThrough;
 
-  void setTextOpacity(double value) {
-    _textOpacity = value;
+  void setControlOpacity(double value) {
+    _controlOpacity = value;
+    notifyListeners();
+  }
+
+  void setFontSize(double value) {
+    _fontSize = value;
     notifyListeners();
   }
 

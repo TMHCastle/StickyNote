@@ -20,7 +20,7 @@ void main() async {
     size: const Size(300, 500),
     center: true,
     backgroundColor: Colors.transparent,
-    skipTaskbar: true,
+    skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
   );
 

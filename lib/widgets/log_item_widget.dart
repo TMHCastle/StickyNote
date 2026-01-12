@@ -19,22 +19,24 @@ class LogItemWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
       ),
       child: CheckboxListTile(
-        value: log.done,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-        dense: true,
         controlAffinity: ListTileControlAffinity.leading,
+        value: log.done,
+        onChanged: (val) {
+          log.done = val ?? false;
+          provider.updateLog(log);
+        },
         title: Text(
           log.title,
           style: TextStyle(
-            color: log.color != null ? Color(log.color!) : Colors.white,
             decoration: log.done ? TextDecoration.lineThrough : null,
-            fontSize: 12,
+            color: log.color != null ? Color(log.color!) : Colors.white,
+            fontSize: provider.fontSize,
           ),
         ),
-        onChanged: (val) {
-          log.done = val!;
-          provider.updateLog(log);
-        },
+        secondary: log.category != '默认'
+            ? Chip(
+                label: Text(log.category, style: const TextStyle(fontSize: 10)))
+            : null,
       ),
     );
   }
