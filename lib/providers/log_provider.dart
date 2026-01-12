@@ -26,8 +26,15 @@ class LogProvider extends ChangeNotifier {
     box.put('logs', _logs.map((e) => e.toJson()).toList());
   }
 
-  void addLog(String title) {
-    _logs.add(LogEntry(id: const Uuid().v4(), title: title));
+  void addLog(String title,
+      {String category = '默认', int? color, int? backgroundColor}) {
+    _logs.add(LogEntry(
+      id: const Uuid().v4(),
+      title: title,
+      category: category,
+      color: color,
+      backgroundColor: backgroundColor,
+    ));
     saveLogs();
     notifyListeners();
   }
@@ -44,6 +51,61 @@ class LogProvider extends ChangeNotifier {
   void removeLog(String id) {
     _logs.removeWhere((e) => e.id == id);
     saveLogs();
+    notifyListeners();
+  }
+
+  double _textOpacity = 1.0;
+  double get textOpacity => _textOpacity;
+
+  double _bgOpacity = 0.5;
+  double get bgOpacity => _bgOpacity;
+
+  int _layoutBackgroundColor = Colors.black.value;
+  int get layoutBackgroundColor => _layoutBackgroundColor;
+
+  String? _backgroundImage;
+  String? get backgroundImage => _backgroundImage;
+
+  final List<String> _categories = ['默认', '工作', '生活', '重要'];
+  List<String> get categories => _categories;
+
+  bool _clickThrough = false;
+  bool get clickThrough => _clickThrough;
+
+  void setTextOpacity(double value) {
+    _textOpacity = value;
+    notifyListeners();
+  }
+
+  void setBgOpacity(double value) {
+    _bgOpacity = value;
+    notifyListeners();
+  }
+
+  void setLayoutBackgroundColor(int color) {
+    _layoutBackgroundColor = color;
+    notifyListeners();
+  }
+
+  void setBackgroundImage(String? path) {
+    _backgroundImage = path;
+    notifyListeners();
+  }
+
+  void addCategory(String category) {
+    if (!_categories.contains(category)) {
+      _categories.add(category);
+      notifyListeners();
+    }
+  }
+
+  void toggleClickThrough() {
+    _clickThrough = !_clickThrough;
+    notifyListeners();
+  }
+
+  void setClickThrough(bool value) {
+    _clickThrough = value;
     notifyListeners();
   }
 }

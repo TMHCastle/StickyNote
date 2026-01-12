@@ -1,6 +1,7 @@
-import 'packagefluttermaterial.dart';
-import 'pagesfloating_overlay.dart';
-import 'pagesedit_page.dart';
+import 'package:flutter/material.dart';
+
+import 'pages/floating_overlay.dart';
+import 'pages/edit_page.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -8,12 +9,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner false,
-      title 'Floating Log App',
-      initialRoute '',
-      routes {
-        '' (context) = const FloatingOverlay(),
-        'edit' (context) = const EditPage(),
+      debugShowCheckedModeBanner: false,
+      title: 'Floating Log App',
+      initialRoute: '/',
+      routes: {
+        '/': (context) => FloatingOverlay(),
+        '/edit': (context) => EditPage(),
       },
     );
   }

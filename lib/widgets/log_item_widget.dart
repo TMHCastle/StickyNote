@@ -12,19 +12,30 @@ class LogItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.read<LogProvider>();
 
-    return CheckboxListTile(
-      value: log.done,
-      title: Text(
-        log.title,
-        style: TextStyle(
-          color: Colors.white,
-          decoration: log.done ? TextDecoration.lineThrough : null,
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: log.backgroundColor != null ? Color(log.backgroundColor!) : null,
+        borderRadius: BorderRadius.circular(4),
       ),
-      onChanged: (val) {
-        log.done = val!;
-        provider.updateLog(log);
-      },
+      child: CheckboxListTile(
+        value: log.done,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+        dense: true,
+        controlAffinity: ListTileControlAffinity.leading,
+        title: Text(
+          log.title,
+          style: TextStyle(
+            color: log.color != null ? Color(log.color!) : Colors.white,
+            decoration: log.done ? TextDecoration.lineThrough : null,
+            fontSize: 12,
+          ),
+        ),
+        onChanged: (val) {
+          log.done = val!;
+          provider.updateLog(log);
+        },
+      ),
     );
   }
 }
