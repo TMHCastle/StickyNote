@@ -32,25 +32,21 @@ class LogEntry {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'done': done,
-      'category': category,
-      'color': color,
-      'backgroundColor': backgroundColor,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'done': done,
+        'category': category,
+        'color': color,
+        'backgroundColor': backgroundColor,
+      };
 
-  factory LogEntry.fromJson(Map<String, dynamic> json) {
-    return LogEntry(
-      id: json['id'],
-      title: json['title'],
-      done: json['done'] ?? false,
-      category: json['category'] ?? '默认',
-      color: json['color'],
-      backgroundColor: json['backgroundColor'],
-    );
-  }
+  factory LogEntry.fromJson(Map<String, dynamic> json) => LogEntry(
+        id: json['id'],
+        title: json['title'],
+        done: json['done'] ?? false,
+        category: json['category'] ?? '默认',
+        color: json['color'],
+        backgroundColor: json['backgroundColor'],
+      );
 }
