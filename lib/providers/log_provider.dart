@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'package:window_manager/window_manager.dart';
 import '../models/log_entry.dart';
 
 class LogProvider extends ChangeNotifier {
@@ -82,6 +83,18 @@ class LogProvider extends ChangeNotifier {
   String? _backgroundImage;
   String? get backgroundImage => _backgroundImage;
 
+  // 圆角角度
+  double _borderRadius = 12.0;
+  double get borderRadius => _borderRadius;
+
+// 是否使用背景图片
+  bool _useBackgroundImage = true;
+  bool get useBackgroundImage => _useBackgroundImage;
+
+// 便签整体背景颜色（独立于单条便签）
+  int _noteBackgroundColor = Colors.black54.value;
+  int get noteBackgroundColor => _noteBackgroundColor;
+
   void setControlOpacity(double v) {
     _controlOpacity = v;
     notifyListeners();
@@ -93,7 +106,7 @@ class LogProvider extends ChangeNotifier {
   }
 
   void setBgOpacity(double v) {
-    _bgOpacity = v;
+    _bgOpacity = v.clamp(0.0, 1.0);
     notifyListeners();
   }
 
@@ -104,6 +117,42 @@ class LogProvider extends ChangeNotifier {
 
   void setBackgroundImage(String? path) {
     _backgroundImage = path;
+    _useBackgroundImage = path != null;
+    notifyListeners();
+  }
+
+  void removeBackgroundImage() {
+    _backgroundImage = null;
+    _useBackgroundImage = false;
+    notifyListeners();
+  }
+
+  void setBorderRadius(double v) {
+    _borderRadius = v;
+    notifyListeners();
+  }
+
+  void setUseBackgroundImage(bool v) {
+    _useBackgroundImage = v;
+    notifyListeners();
+  }
+
+  void setNoteBackgroundColor(int v) {
+    _noteBackgroundColor = v;
+    notifyListeners();
+  }
+
+  double _noteBgOpacity = 0.5; // 0~1
+  double get noteBgOpacity => _noteBgOpacity;
+  void setNoteBgOpacity(double v) {
+    _noteBgOpacity = v.clamp(0.0, 1.0);
+    notifyListeners();
+  }
+
+  int _noteBgColor = Colors.black.value;
+  int get noteBgColor => _noteBgColor;
+  void setNoteBgColor(int v) {
+    _noteBgColor = v;
     notifyListeners();
   }
 
@@ -122,10 +171,18 @@ class LogProvider extends ChangeNotifier {
   // ================= 锁定状态（方案 A 核心） =================
 
   bool _locked = false;
+
   bool get locked => _locked;
 
-  void toggleLocked() {
-    _locked = !_locked;
+  /// 托盘主控：修改锁定状态，并通知 UI
+  Future<void> setLocked(bool value) async {
+    _locked = value;
+    await windowManager.setIgnoreMouseEvents(_locked, forward: true);
     notifyListeners();
+  }
+
+  /// 切换锁定状态（可选，用于 FloatingOverlay）
+  Future<void> toggleLocked() async {
+    await setLocked(!_locked);
   }
 }

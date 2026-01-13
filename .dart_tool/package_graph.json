@@ -15,6 +15,8 @@
         "hive",
         "hive_flutter",
         "provider",
+        "system_tray",
+        "tray_manager",
         "uuid",
         "window_manager"
       ],
@@ -38,6 +40,32 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "tray_manager",
+      "version": "0.5.2",
+      "dependencies": [
+        "flutter",
+        "menu_base",
+        "path",
+        "shortid"
+      ]
+    },
+    {
+      "name": "system_tray",
+      "version": "2.0.3",
+      "dependencies": [
+        "flutter",
+        "path",
+        "uuid"
+      ]
+    },
+    {
+      "name": "desktop_multi_window",
+      "version": "0.2.1",
+      "dependencies": [
+        "flutter"
       ]
     },
     {
@@ -212,6 +240,18 @@
         "stream_channel",
         "string_scanner",
         "term_glyph"
+      ]
+    },
+    {
+      "name": "shortid",
+      "version": "0.1.2",
+      "dependencies": []
+    },
+    {
+      "name": "menu_base",
+      "version": "0.1.1",
+      "dependencies": [
+        "flutter"
       ]
     },
     {
@@ -514,13 +554,6 @@
       "dependencies": [
         "meta",
         "path"
-      ]
-    },
-    {
-      "name": "desktop_multi_window",
-      "version": "0.2.1",
-      "dependencies": [
-        "flutter"
       ]
     }
   ],

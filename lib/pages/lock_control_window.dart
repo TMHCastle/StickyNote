@@ -1,33 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:provider/provider.dart';
+import '../providers/log_provider.dart';
 
-class LockControlWindow extends StatefulWidget {
+/// 单窗口锁定穿透控制按钮
+/// 注意：不再使用 DesktopMultiWindow
+class LockControlWindow extends StatelessWidget {
   const LockControlWindow({super.key});
 
   @override
-  State<LockControlWindow> createState() => _LockControlWindowState();
-}
-
-class _LockControlWindowState extends State<LockControlWindow> {
-  bool locked = false;
-
-  @override
   Widget build(BuildContext context) {
+    final provider = context.watch<LogProvider>();
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Center(
         child: GestureDetector(
           onTap: () async {
-            locked = !locked;
-
-            // 控制主窗口（ID 0）
-            final mainWindow = WindowManager.instance;
-            await mainWindow.setIgnoreMouseEvents(
-              locked,
+            // 切换锁定穿透状态
+            await windowManager.setIgnoreMouseEvents(
+              !provider.locked,
               forward: true,
             );
-
-            setState(() {});
+            provider.toggleLocked();
           },
           child: Container(
             width: 48,
@@ -37,7 +32,7 @@ class _LockControlWindowState extends State<LockControlWindow> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              locked ? Icons.lock : Icons.lock_open,
+              provider.locked ? Icons.lock : Icons.lock_open,
               color: Colors.white,
             ),
           ),
