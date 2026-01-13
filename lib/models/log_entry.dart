@@ -1,10 +1,10 @@
 class LogEntry {
-  String id;
-  String title;
-  bool done;
-  String category;
-  int? color; // content color
-  int? backgroundColor; // Added individual background color support
+  final String id;
+  final String title;
+  final bool done;
+  final String category;
+  final int? color;
+  final int? backgroundColor;
 
   LogEntry({
     required this.id,
@@ -15,21 +15,42 @@ class LogEntry {
     this.backgroundColor,
   });
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'done': done,
-        'category': category,
-        'color': color,
-        'backgroundColor': backgroundColor,
-      };
+  LogEntry copyWith({
+    String? title,
+    bool? done,
+    String? category,
+    int? color,
+    int? backgroundColor,
+  }) {
+    return LogEntry(
+      id: id,
+      title: title ?? this.title,
+      done: done ?? this.done,
+      category: category ?? this.category,
+      color: color ?? this.color,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+    );
+  }
 
-  factory LogEntry.fromJson(Map<String, dynamic> json) => LogEntry(
-        id: json['id'],
-        title: json['title'],
-        done: json['done'],
-        category: json['category'] ?? '默认',
-        color: json['color'],
-        backgroundColor: json['backgroundColor'],
-      );
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'done': done,
+      'category': category,
+      'color': color,
+      'backgroundColor': backgroundColor,
+    };
+  }
+
+  factory LogEntry.fromJson(Map<String, dynamic> json) {
+    return LogEntry(
+      id: json['id'],
+      title: json['title'],
+      done: json['done'] ?? false,
+      category: json['category'] ?? '默认',
+      color: json['color'],
+      backgroundColor: json['backgroundColor'],
+    );
+  }
 }

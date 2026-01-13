@@ -5,20 +5,25 @@ import '../models/log_entry.dart';
 
 class LogProvider extends ChangeNotifier {
   final Box box = Hive.box('logBox');
-  final List<LogEntry> _logs = [];
 
+  final List<LogEntry> _logs = [];
   List<LogEntry> get logs => _logs;
 
   LogProvider() {
     loadLogs();
   }
 
+  // ================= 日志 =================
+
   void loadLogs() {
     final stored = box.get('logs', defaultValue: []);
-    _logs.clear();
-    for (var json in stored) {
-      _logs.add(LogEntry.fromJson(Map<String, dynamic>.from(json)));
-    }
+    _logs
+      ..clear()
+      ..addAll(
+        stored.map<LogEntry>(
+          (e) => LogEntry.fromJson(Map<String, dynamic>.from(e)),
+        ),
+      );
     notifyListeners();
   }
 
@@ -26,15 +31,21 @@ class LogProvider extends ChangeNotifier {
     box.put('logs', _logs.map((e) => e.toJson()).toList());
   }
 
-  void addLog(String title,
-      {String category = '默认', int? color, int? backgroundColor}) {
-    _logs.add(LogEntry(
-      id: const Uuid().v4(),
-      title: title,
-      category: category,
-      color: color,
-      backgroundColor: backgroundColor,
-    ));
+  void addLog(
+    String title, {
+    String category = '默认',
+    int? color,
+    int? backgroundColor,
+  }) {
+    _logs.add(
+      LogEntry(
+        id: const Uuid().v4(),
+        title: title,
+        category: category,
+        color: color,
+        backgroundColor: backgroundColor,
+      ),
+    );
     saveLogs();
     notifyListeners();
   }
@@ -54,6 +65,8 @@ class LogProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ================= 外观设置 =================
+
   double _controlOpacity = 1.0;
   double get controlOpacity => _controlOpacity;
 
@@ -69,29 +82,23 @@ class LogProvider extends ChangeNotifier {
   String? _backgroundImage;
   String? get backgroundImage => _backgroundImage;
 
-  final List<String> _categories = ['默认', '工作', '生活', '重要'];
-  List<String> get categories => _categories;
-
-  bool _clickThrough = false;
-  bool get clickThrough => _clickThrough;
-
-  void setControlOpacity(double value) {
-    _controlOpacity = value;
+  void setControlOpacity(double v) {
+    _controlOpacity = v;
     notifyListeners();
   }
 
-  void setFontSize(double value) {
-    _fontSize = value;
+  void setFontSize(double v) {
+    _fontSize = v;
     notifyListeners();
   }
 
-  void setBgOpacity(double value) {
-    _bgOpacity = value;
+  void setBgOpacity(double v) {
+    _bgOpacity = v;
     notifyListeners();
   }
 
-  void setLayoutBackgroundColor(int color) {
-    _layoutBackgroundColor = color;
+  void setLayoutBackgroundColor(int v) {
+    _layoutBackgroundColor = v;
     notifyListeners();
   }
 
@@ -100,6 +107,11 @@ class LogProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ================= 分类 =================
+
+  final List<String> _categories = ['默认', '工作', '生活', '重要'];
+  List<String> get categories => _categories;
+
   void addCategory(String category) {
     if (!_categories.contains(category)) {
       _categories.add(category);
@@ -107,13 +119,13 @@ class LogProvider extends ChangeNotifier {
     }
   }
 
-  void toggleClickThrough() {
-    _clickThrough = !_clickThrough;
-    notifyListeners();
-  }
+  // ================= 锁定状态（方案 A 核心） =================
 
-  void setClickThrough(bool value) {
-    _clickThrough = value;
+  bool _locked = false;
+  bool get locked => _locked;
+
+  void toggleLocked() {
+    _locked = !_locked;
     notifyListeners();
   }
 }

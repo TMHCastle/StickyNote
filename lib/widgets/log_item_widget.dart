@@ -13,30 +13,37 @@ class LogItemWidget extends StatelessWidget {
     final provider = context.read<LogProvider>();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 4),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: log.backgroundColor != null ? Color(log.backgroundColor!) : null,
-        borderRadius: BorderRadius.circular(4),
+        color: log.backgroundColor != null
+            ? Color(log.backgroundColor!)
+            : Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: CheckboxListTile(
-        controlAffinity: ListTileControlAffinity.leading,
-        value: log.done,
-        onChanged: (val) {
-          log.done = val ?? false;
-          provider.updateLog(log);
-        },
-        title: Text(
-          log.title,
-          style: TextStyle(
-            decoration: log.done ? TextDecoration.lineThrough : null,
-            color: log.color != null ? Color(log.color!) : Colors.white,
-            fontSize: provider.fontSize,
+      child: Row(
+        children: [
+          Checkbox(
+            value: log.done,
+            onChanged: (v) {
+              provider.updateLog(log.copyWith(done: v ?? false));
+            },
           ),
-        ),
-        secondary: log.category != '默认'
-            ? Chip(
-                label: Text(log.category, style: const TextStyle(fontSize: 10)))
-            : null,
+          Expanded(
+            child: Text(
+              log.title,
+              style: TextStyle(
+                fontSize: provider.fontSize,
+                color: log.color != null ? Color(log.color!) : Colors.white,
+                decoration: log.done ? TextDecoration.lineThrough : null,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 16),
+            onPressed: () => provider.removeLog(log.id),
+          ),
+        ],
       ),
     );
   }

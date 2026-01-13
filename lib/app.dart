@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'pages/floating_overlay.dart';
 import 'pages/edit_page.dart';
 import 'pages/settings_page.dart';
@@ -11,12 +10,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Floating Log App',
+      theme: ThemeData.dark(useMaterial3: true),
       initialRoute: '/',
       routes: {
-        '/': (context) => FloatingOverlay(),
-        '/edit': (context) => EditPage(),
-        '/settings': (context) => SettingsPage(),
+        '/': (_) => const FloatingOverlay(),
+        '/edit': (_) => const EditPage(),
+        '/settings': (_) => const SettingsPage(),
       },
     );
   }

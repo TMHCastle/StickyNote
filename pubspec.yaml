@@ -1,6 +1,6 @@
 name: floating_log_app
 description: Flutter Windows 悬浮日志 MVP 示例
-version: 0.1.0
+version: 0.1.1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -16,6 +16,7 @@ dependencies:
   uuid: ^3.0.7
   file_picker: ^10.3.8
   flex_color_picker: ^3.8.0
+  desktop_multi_window: ^0.3.0   # ⭐ 新增
 
 dev_dependencies:
   flutter_test:
