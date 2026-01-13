@@ -11,20 +11,33 @@ class LogProvider extends ChangeNotifier {
   List<LogEntry> get logs => _logs;
 
   LogProvider() {
-    loadLogs();
+    _loadAll();
   }
 
   // ================= 日志 =================
-
-  void loadLogs() {
+  void _loadAll() {
+    // 日志
     final stored = box.get('logs', defaultValue: []);
     _logs
       ..clear()
       ..addAll(
         stored.map<LogEntry>(
-          (e) => LogEntry.fromJson(Map<String, dynamic>.from(e)),
-        ),
+            (e) => LogEntry.fromJson(Map<String, dynamic>.from(e))),
       );
+
+    // 外观设置
+    _controlOpacity = box.get('controlOpacity', defaultValue: 1.0);
+    _fontSize = box.get('fontSize', defaultValue: 14.0);
+    _bgOpacity = box.get('bgOpacity', defaultValue: 0.5);
+    _layoutBackgroundColor =
+        box.get('layoutBackgroundColor', defaultValue: Colors.black.value);
+    _backgroundImage = box.get('backgroundImage');
+    _useBackgroundImage =
+        box.get('useBackgroundImage', defaultValue: _backgroundImage != null);
+    _borderRadius = box.get('borderRadius', defaultValue: 12.0);
+    _noteBgOpacity = box.get('noteBgOpacity', defaultValue: 0.5);
+    _noteBgColor = box.get('noteBgColor', defaultValue: Colors.black.value);
+
     notifyListeners();
   }
 
@@ -32,12 +45,8 @@ class LogProvider extends ChangeNotifier {
     box.put('logs', _logs.map((e) => e.toJson()).toList());
   }
 
-  void addLog(
-    String title, {
-    String category = '默认',
-    int? color,
-    int? backgroundColor,
-  }) {
+  void addLog(String title,
+      {String category = '默认', int? color, int? backgroundColor}) {
     _logs.add(
       LogEntry(
         id: const Uuid().v4(),
@@ -67,85 +76,84 @@ class LogProvider extends ChangeNotifier {
   }
 
   // ================= 外观设置 =================
-
   double _controlOpacity = 1.0;
   double get controlOpacity => _controlOpacity;
+  void setControlOpacity(double v) {
+    _controlOpacity = v;
+    box.put('controlOpacity', v);
+    notifyListeners();
+  }
 
   double _fontSize = 14.0;
   double get fontSize => _fontSize;
+  void setFontSize(double v) {
+    _fontSize = v;
+    box.put('fontSize', v);
+    notifyListeners();
+  }
 
   double _bgOpacity = 0.5;
   double get bgOpacity => _bgOpacity;
+  void setBgOpacity(double v) {
+    _bgOpacity = v.clamp(0.0, 1.0);
+    box.put('bgOpacity', _bgOpacity);
+    notifyListeners();
+  }
 
   int _layoutBackgroundColor = Colors.black.value;
   int get layoutBackgroundColor => _layoutBackgroundColor;
+  void setLayoutBackgroundColor(int v) {
+    _layoutBackgroundColor = v;
+    box.put('layoutBackgroundColor', v);
+    notifyListeners();
+  }
 
   String? _backgroundImage;
   String? get backgroundImage => _backgroundImage;
-
-  // 圆角角度
-  double _borderRadius = 12.0;
-  double get borderRadius => _borderRadius;
-
-// 是否使用背景图片
-  bool _useBackgroundImage = true;
-  bool get useBackgroundImage => _useBackgroundImage;
-
-// 便签整体背景颜色（独立于单条便签）
-  int _noteBackgroundColor = Colors.black54.value;
-  int get noteBackgroundColor => _noteBackgroundColor;
-
-  void setControlOpacity(double v) {
-    _controlOpacity = v;
-    notifyListeners();
-  }
-
-  void setFontSize(double v) {
-    _fontSize = v;
-    notifyListeners();
-  }
-
-  void setBgOpacity(double v) {
-    _bgOpacity = v.clamp(0.0, 1.0);
-    notifyListeners();
-  }
-
-  void setLayoutBackgroundColor(int v) {
-    _layoutBackgroundColor = v;
-    notifyListeners();
-  }
-
   void setBackgroundImage(String? path) {
     _backgroundImage = path;
+    box.put('backgroundImage', path);
     _useBackgroundImage = path != null;
+    box.put('useBackgroundImage', _useBackgroundImage);
     notifyListeners();
   }
 
   void removeBackgroundImage() {
     _backgroundImage = null;
     _useBackgroundImage = false;
+    box.delete('backgroundImage');
+    box.put('useBackgroundImage', false);
     notifyListeners();
   }
 
-  void setBorderRadius(double v) {
-    _borderRadius = v;
-    notifyListeners();
-  }
-
+  bool _useBackgroundImage = true;
+  bool get useBackgroundImage => _useBackgroundImage;
   void setUseBackgroundImage(bool v) {
     _useBackgroundImage = v;
+    box.put('useBackgroundImage', v);
     notifyListeners();
   }
 
+  int _noteBackgroundColor = Colors.black54.value;
+  int get noteBackgroundColor => _noteBackgroundColor;
   void setNoteBackgroundColor(int v) {
     _noteBackgroundColor = v;
     notifyListeners();
   }
 
-  double _noteBgOpacity = 0.5; // 0~1
+  double _borderRadius = 12.0;
+  double get borderRadius => _borderRadius;
+  void setBorderRadius(double v) {
+    _borderRadius = v;
+    box.put('borderRadius', v);
+    notifyListeners();
+  }
+
+  double _noteBgOpacity = 0.5;
   double get noteBgOpacity => _noteBgOpacity;
   void setNoteBgOpacity(double v) {
     _noteBgOpacity = v.clamp(0.0, 1.0);
+    box.put('noteBgOpacity', _noteBgOpacity);
     notifyListeners();
   }
 
@@ -153,14 +161,13 @@ class LogProvider extends ChangeNotifier {
   int get noteBgColor => _noteBgColor;
   void setNoteBgColor(int v) {
     _noteBgColor = v;
+    box.put('noteBgColor', v);
     notifyListeners();
   }
 
   // ================= 分类 =================
-
   final List<String> _categories = ['默认', '工作', '生活', '重要'];
   List<String> get categories => _categories;
-
   void addCategory(String category) {
     if (!_categories.contains(category)) {
       _categories.add(category);
@@ -168,20 +175,16 @@ class LogProvider extends ChangeNotifier {
     }
   }
 
-  // ================= 锁定状态（方案 A 核心） =================
-
+  // ================= 锁定状态 =================
   bool _locked = false;
-
   bool get locked => _locked;
 
-  /// 托盘主控：修改锁定状态，并通知 UI
   Future<void> setLocked(bool value) async {
     _locked = value;
     await windowManager.setIgnoreMouseEvents(_locked, forward: true);
     notifyListeners();
   }
 
-  /// 切换锁定状态（可选，用于 FloatingOverlay）
   Future<void> toggleLocked() async {
     await setLocked(!_locked);
   }
