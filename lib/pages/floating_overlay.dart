@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import '../providers/log_provider.dart';
 import '../widgets/log_item_widget.dart';
-import '../tray_manager_helper.dart';
+import '../listener/tray_manager_helper.dart';
 
 class FloatingOverlay extends StatelessWidget {
   const FloatingOverlay({super.key});
@@ -41,119 +41,123 @@ class FloatingOverlay extends StatelessWidget {
               ),
             ),
 
-            // ===== 主内容层（锁定时穿透鼠标）=====
-            IgnorePointer(
-              ignoring: provider.locked,
-              child: Column(
-                children: [
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Row(
-                      children: [
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.settings, size: 20),
-                          color:
-                              Colors.white.withOpacity(provider.controlOpacity),
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/settings');
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      children: provider.logs
-                          .map<Widget>((log) => LogItemWidget(
-                                log: log,
-                                noteOpacity: provider.noteBgOpacity,
-                                fontSize: provider.fontSize,
-                              ))
-                          .toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/edit');
-                    },
-                    icon: Icon(Icons.edit,
-                        size: 16,
-                        color:
-                            Colors.white.withOpacity(provider.controlOpacity)),
-                    label: Text(
-                      '编辑',
-                      style: TextStyle(
-                          color: Colors.white
-                              .withOpacity(provider.controlOpacity)),
-                    ),
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.white
-                          .withOpacity(0.2 * provider.controlOpacity),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+            // ===== 主内容层（便签列表）=====
+            Positioned.fill(
+              top: 40, // 给顶部锁定按钮留空间
+              child: IgnorePointer(
+                ignoring: provider.locked, // 锁定时穿透鼠标
+                child: ListView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  children: provider.logs
+                      .map<Widget>((log) => LogItemWidget(
+                            log: log,
+                            noteOpacity: provider.noteBgOpacity,
+                            fontSize: provider.fontSize,
+                          ))
+                      .toList(),
+                ),
               ),
             ),
 
-            // ===== 锁定按钮（永远可点击）=====
+            // ===== 编辑按钮（始终可点击）=====
+            Positioned(
+              bottom: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/edit');
+                  },
+                  icon: Icon(Icons.edit,
+                      size: 16,
+                      color: Colors.white.withOpacity(provider.controlOpacity)),
+                  label: Text(
+                    '编辑',
+                    style: TextStyle(
+                        color:
+                            Colors.white.withOpacity(provider.controlOpacity)),
+                  ),
+                  style: TextButton.styleFrom(
+                    backgroundColor:
+                        Colors.white.withOpacity(0.2 * provider.controlOpacity),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // ===== 顶部锁定按钮（永远可点击，支持拖动窗口）=====
             Positioned(
               top: 8,
               left: 8,
-              child: ValueListenableBuilder<bool>(
-                valueListenable: lockNotifier,
-                builder: (context, locked, _) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      GestureDetector(
-                        onTap: () async => await toggleLock(),
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: Colors.black
-                                .withOpacity(0.6 * provider.controlOpacity),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            locked ? Icons.lock : Icons.lock_open,
-                            size: 16,
-                            color: Colors.white
-                                .withOpacity(provider.controlOpacity),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 80,
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 500),
-                          transitionBuilder: (child, animation) =>
-                              FadeTransition(opacity: animation, child: child),
-                          switchInCurve: Curves.easeIn,
-                          switchOutCurve: Curves.easeOut,
-                          child: Text(
-                            locked ? '请在托盘解锁' : '点击锁定',
-                            key: ValueKey<bool>(locked),
-                            style: TextStyle(
+              child: GestureDetector(
+                onPanStart: (_) => windowManager.startDragging(),
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: lockNotifier,
+                  builder: (context, locked, _) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: () async => await toggleLock(),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: Colors.black
+                                  .withOpacity(0.6 * provider.controlOpacity),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              locked ? Icons.lock : Icons.lock_open,
+                              size: 16,
                               color: Colors.white
                                   .withOpacity(provider.controlOpacity),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  );
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 80,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 500),
+                            transitionBuilder: (child, animation) =>
+                                FadeTransition(
+                                    opacity: animation, child: child),
+                            switchInCurve: Curves.easeIn,
+                            switchOutCurve: Curves.easeOut,
+                            child: Text(
+                              locked ? '请在托盘解锁' : '点击锁定',
+                              key: ValueKey<bool>(locked),
+                              style: TextStyle(
+                                color: Colors.white
+                                    .withOpacity(provider.controlOpacity),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // ===== 右上角设置按钮（始终可点击）=====
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.settings, size: 20),
+                color: Colors.white.withOpacity(provider.controlOpacity),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/settings');
                 },
               ),
             ),

@@ -24,7 +24,7 @@ class SettingsPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // 圆角调整
+          // 窗口圆角
           _buildSlider(
             label: '窗口圆角 (${provider.borderRadius.toInt()})',
             value: provider.borderRadius,
@@ -46,7 +46,7 @@ class SettingsPage extends StatelessWidget {
           _buildSlider(
             label: '背景透明度',
             value: provider.bgOpacity,
-            min: 0.1,
+            min: 0.0, // 允许为0
             max: 1.0,
             onChanged: provider.setBgOpacity,
           ),
@@ -60,9 +60,10 @@ class SettingsPage extends StatelessWidget {
             onChanged: provider.setFontSize,
           ),
 
+          // 便签透明度（每条便签透明度）
           _buildSlider(
             label: '便签透明度',
-            value: provider.noteBgOpacity, // 新增字段
+            value: provider.noteBgOpacity,
             min: 0.0,
             max: 1.0,
             onChanged: provider.setNoteBgOpacity,
@@ -82,7 +83,30 @@ class SettingsPage extends StatelessWidget {
             onChanged: provider.setUseBackgroundImage,
           ),
 
-          // 背景颜色选择
+          // 背景颜色选择（未选图片时可用）
+          if (!provider.useBackgroundImage || provider.backgroundImage == null)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('背景颜色'),
+              trailing: ColorIndicator(
+                width: 40,
+                height: 40,
+                borderRadius: 6,
+                color: Color(provider.layoutBackgroundColor),
+                onSelectFocus: false,
+                onSelect: () async {
+                  final Color newColor = await showColorPickerDialog(
+                    context,
+                    Color(provider.layoutBackgroundColor),
+                    title: const Text('选择背景颜色'),
+                    enableOpacity: false,
+                  );
+                  provider.setLayoutBackgroundColor(newColor.value);
+                },
+              ),
+            ),
+
+          // 背景图片上传/删除
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('背景图片'),
@@ -95,8 +119,7 @@ class SettingsPage extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.upload_file),
                   onPressed: () async {
-                    // 使用文件选择器
-                    final path = await pickImageFile(); // 自定义方法返回图片路径
+                    final path = await pickImageFile();
                     if (path != null) {
                       provider.setBackgroundImage(path);
                     }
@@ -123,7 +146,7 @@ class SettingsPage extends StatelessWidget {
           // 便签整体背景色（独立于单条便签）
           ListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('便签背景色'),
+            title: const Text('便签整体背景色'),
             trailing: ColorIndicator(
               width: 40,
               height: 40,

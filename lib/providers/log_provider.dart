@@ -165,6 +165,43 @@ class LogProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ================= 窗口状态 =================
+  double _windowX = 100;
+  double _windowY = 100;
+  double _windowWidth = 400;
+  double _windowHeight = 600;
+
+  double get windowX => _windowX;
+  double get windowY => _windowY;
+  double get windowWidth => _windowWidth;
+  double get windowHeight => _windowHeight;
+
+  void setWindowPosition(double x, double y) {
+    _windowX = x;
+    _windowY = y;
+    saveWindowState();
+  }
+
+  void setWindowSize(double width, double height) {
+    _windowWidth = width;
+    _windowHeight = height;
+    saveWindowState();
+  }
+
+  void saveWindowState() {
+    box.put('windowX', _windowX);
+    box.put('windowY', _windowY);
+    box.put('windowWidth', _windowWidth);
+    box.put('windowHeight', _windowHeight);
+  }
+
+  void loadWindowState() {
+    _windowX = box.get('windowX', defaultValue: 100.0);
+    _windowY = box.get('windowY', defaultValue: 100.0);
+    _windowWidth = box.get('windowWidth', defaultValue: 400.0);
+    _windowHeight = box.get('windowHeight', defaultValue: 600.0);
+  }
+
   // ================= 分类 =================
   final List<String> _categories = ['默认', '工作', '生活', '重要'];
   List<String> get categories => _categories;

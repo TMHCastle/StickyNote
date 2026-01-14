@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:provider/provider.dart';
-import 'tray_manager_helper.dart';
+import 'listener/tray_manager_helper.dart';
+import 'listener/save_window_listener.dart';
 import 'app.dart';
 import 'providers/log_provider.dart';
 
@@ -14,26 +15,35 @@ void main() async {
     await Hive.initFlutter();
     await Hive.openBox('logBox');
 
+    final provider = LogProvider();
+    provider.loadWindowState(); // 加载上次位置
+
     // 2. WindowManager 初始化
     await windowManager.ensureInitialized();
 
     // 设置窗口参数
-    WindowOptions windowOptions = const WindowOptions(
-      size: Size(300, 500),
+    WindowOptions windowOptions = WindowOptions(
+      size: Size(provider.windowWidth, provider.windowHeight),
       backgroundColor: Colors.transparent,
       titleBarStyle: TitleBarStyle.hidden,
       alwaysOnTop: true,
-      skipTaskbar: false, // 确保窗口不在任务栏显示
-      minimumSize: Size(200, 300),
+      skipTaskbar: false,
+      minimumSize: const Size(200, 300),
     );
 
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.setBounds(Rect.fromLTWH(
+        provider.windowX,
+        provider.windowY,
+        provider.windowWidth,
+        provider.windowHeight,
+      ));
       await windowManager.show();
       await windowManager.focus();
       await windowManager.setIgnoreMouseEvents(false); // 默认不穿透
 
       // 可选：设置窗口位置
-      await windowManager.setPosition(Offset.zero);
+      windowManager.addListener(SaveWindowListener(provider));
     });
 
     // 3. 托盘初始化（放在最后，确保窗口已准备好）
