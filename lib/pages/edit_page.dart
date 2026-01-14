@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/log_provider.dart';
 import '../models/log_entry.dart';
+import '../widgets/unified_background.dart';
 
 class EditPage extends StatefulWidget {
   const EditPage({super.key});
@@ -32,158 +33,190 @@ class _EditPageState extends State<EditPage> {
     final provider = context.watch<LogProvider>();
     final categories = provider.categories;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(editingId == null ? '新增日志' : '修改日志'),
-      ),
-      body: Column(
-        children: [
-          // ===== 输入区 =====
-          Container(
-            margin: const EdgeInsets.all(8),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(8),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(provider.borderRadius),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text(editingId == null ? '新增日志' : '修改日志'),
+          backgroundColor: Colors.black.withOpacity(0.4),
+          elevation: 0,
+        ),
+        body: Stack(
+          children: [
+            // ===== 统一背景（与 FloatingOverlay 完全一致）=====
+            const Positioned.fill(
+              child: UnifiedBackground(),
             ),
-            child: Column(
+
+            // ===== 实际内容 =====
+            Column(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        decoration: InputDecoration(
-                          hintText: '输入便签内容',
-                          border: InputBorder.none,
-                          suffixIcon: editingId != null
-                              ? IconButton(
-                                  icon: const Icon(Icons.close),
-                                  tooltip: '取消编辑',
-                                  onPressed: _resetForm,
-                                )
-                              : null,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        editingId == null ? Icons.add : Icons.save,
-                        color: Colors.blue,
-                      ),
-                      onPressed: _saveOrUpdate,
-                    ),
-                  ],
-                ),
-                const Divider(),
-
-                // ===== 分类 + 颜色 =====
-                Row(
-                  children: [
-                    DropdownButton<String>(
-                      value: categories.contains(selectedCategory)
-                          ? selectedCategory
-                          : categories.first,
-                      items: categories
-                          .map(
-                            (c) => DropdownMenuItem(
-                              value: c,
-                              child: Text(c),
+                // ===== 输入区 =====
+                Container(
+                  margin: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _controller,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                hintText: '输入便签内容',
+                                hintStyle:
+                                    const TextStyle(color: Colors.white54),
+                                border: InputBorder.none,
+                                suffixIcon: editingId != null
+                                    ? IconButton(
+                                        icon: const Icon(Icons.close),
+                                        tooltip: '取消编辑',
+                                        onPressed: _resetForm,
+                                      )
+                                    : null,
+                              ),
                             ),
-                          )
-                          .toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => selectedCategory = val);
-                        }
-                      },
-                      underline: const SizedBox(),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline, size: 18),
-                      tooltip: '新增分类',
-                      onPressed: () =>
-                          _showAddCategoryDialog(context, provider),
-                    ),
-                    const Spacer(),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              editingId == null ? Icons.add : Icons.save,
+                              color: Colors.lightBlueAccent,
+                            ),
+                            onPressed: _saveOrUpdate,
+                          ),
+                        ],
+                      ),
+                      const Divider(color: Colors.white24),
 
-                    // 文字颜色
-                    _ColorDot(
-                      label: 'T',
-                      color: selectedColor ?? Colors.white,
-                      onTap: () async {
-                        final c = await showColorPickerDialog(
-                          context,
-                          selectedColor ?? Colors.white,
-                          title: const Text('文字颜色'),
-                          enableOpacity: false,
-                        );
-                        setState(() => selectedColor = c);
-                      },
-                    ),
+                      // ===== 分类 + 颜色 =====
+                      Row(
+                        children: [
+                          DropdownButton<String>(
+                            dropdownColor: Colors.black.withOpacity(0.8),
+                            value: categories.contains(selectedCategory)
+                                ? selectedCategory
+                                : categories.first,
+                            items: categories
+                                .map(
+                                  (c) => DropdownMenuItem(
+                                    value: c,
+                                    child: Text(
+                                      c,
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => selectedCategory = val);
+                              }
+                            },
+                            underline: const SizedBox(),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.add_circle_outline,
+                              size: 18,
+                              color: Colors.white70,
+                            ),
+                            tooltip: '新增分类',
+                            onPressed: () =>
+                                _showAddCategoryDialog(context, provider),
+                          ),
+                          const Spacer(),
 
-                    // 背景颜色
-                    _ColorDot(
-                      label: 'B',
-                      color: selectedBgColor ?? Colors.transparent,
-                      onTap: () async {
-                        final c = await showColorPickerDialog(
-                          context,
-                          selectedBgColor ?? Colors.transparent,
-                          title: const Text('背景颜色'),
-                          enableOpacity: true,
-                        );
-                        setState(() => selectedBgColor = c);
-                      },
-                    ),
-                  ],
+                          // 文字颜色
+                          _ColorDot(
+                            label: 'T',
+                            color: selectedColor ?? Colors.white,
+                            onTap: () async {
+                              final c = await showColorPickerDialog(
+                                context,
+                                selectedColor ?? Colors.white,
+                                title: const Text('文字颜色'),
+                                enableOpacity: false,
+                              );
+                              setState(() => selectedColor = c);
+                            },
+                          ),
+
+                          // 背景颜色
+                          _ColorDot(
+                            label: 'B',
+                            color: selectedBgColor ?? Colors.transparent,
+                            onTap: () async {
+                              final c = await showColorPickerDialog(
+                                context,
+                                selectedBgColor ?? Colors.transparent,
+                                title: const Text('背景颜色'),
+                                enableOpacity: true,
+                              );
+                              setState(() => selectedBgColor = c);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ===== 日志列表 =====
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    itemCount: provider.logs.length,
+                    itemBuilder: (context, index) {
+                      final LogEntry log = provider.logs[index];
+
+                      return ListTile(
+                        leading: Container(
+                          width: 4,
+                          color: log.backgroundColor != null
+                              ? Color(log.backgroundColor!)
+                              : Colors.grey,
+                        ),
+                        title: Text(
+                          log.title,
+                          style: TextStyle(
+                            color: log.color != null
+                                ? Color(log.color!)
+                                : Colors.white,
+                          ),
+                        ),
+                        subtitle: Text(
+                          log.category,
+                          style: const TextStyle(color: Colors.white60),
+                        ),
+                        onTap: () => _enterEdit(log),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.white70),
+                          onPressed: () => provider.removeLog(log.id),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
-          ),
-
-          // ===== 日志列表 =====
-          Expanded(
-            child: ListView.builder(
-              itemCount: provider.logs.length,
-              itemBuilder: (context, index) {
-                final LogEntry log = provider.logs[index];
-
-                return ListTile(
-                  leading: Container(
-                    width: 4,
-                    color: log.backgroundColor != null
-                        ? Color(log.backgroundColor!)
-                        : Colors.grey,
-                  ),
-                  title: Text(
-                    log.title,
-                    style: TextStyle(
-                      color:
-                          log.color != null ? Color(log.color!) : Colors.black,
-                    ),
-                  ),
-                  subtitle: Text(log.category),
-                  onTap: () => _enterEdit(log),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => provider.removeLog(log.id),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // ===== 行为方法 =====
+  // ===== 行为方法（保持原样）=====
 
   void _saveOrUpdate() {
     final provider = context.read<LogProvider>();
     final text = _controller.text.trim();
-
     if (text.isEmpty) return;
 
     if (editingId == null) {
@@ -201,7 +234,6 @@ class _EditPageState extends State<EditPage> {
         color: selectedColor?.value,
         backgroundColor: selectedBgColor?.value,
       );
-      provider.updateLog(log);
       provider.updateLog(updated);
     }
 
@@ -258,7 +290,7 @@ class _EditPageState extends State<EditPage> {
   }
 }
 
-// ===== 小组件：颜色点 =====
+// ===== 小组件：颜色点（保持原样）=====
 
 class _ColorDot extends StatelessWidget {
   final String label;
