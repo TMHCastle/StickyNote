@@ -134,14 +134,7 @@ class LogProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  int _noteBackgroundColor = Colors.black54.value;
-  int get noteBackgroundColor => _noteBackgroundColor;
-  void setNoteBackgroundColor(int v) {
-    _noteBackgroundColor = v;
-    notifyListeners();
-  }
-
-  double _borderRadius = 12.0;
+  double _borderRadius = 0;
   double get borderRadius => _borderRadius;
   void setBorderRadius(double v) {
     _borderRadius = v;
