@@ -46,7 +46,7 @@ class FloatingOverlay extends StatelessWidget {
 
             // ===== 主内容层（便签列表）=====
             Positioned.fill(
-              top: 40, // 给顶部锁定按钮留空间
+              top: 52, // 给顶部锁定按钮留空间
               child: IgnorePointer(
                 ignoring: provider.locked, // 锁定时穿透鼠标
                 child: ListView(
@@ -65,7 +65,7 @@ class FloatingOverlay extends StatelessWidget {
 
             // ===== 编辑按钮（始终可点击）=====
             Positioned(
-              bottom: 8,
+              bottom: 16,
               left: 0,
               right: 0,
               child: Center(
@@ -97,8 +97,8 @@ class FloatingOverlay extends StatelessWidget {
 
             // ===== 顶部锁定按钮（永远可点击，支持拖动窗口）=====
             Positioned(
-              top: 8,
-              left: 8,
+              top: 16,
+              left: 16,
               child: GestureDetector(
                 onPanStart: (_) => windowManager.startDragging(),
                 child: ValueListenableBuilder<bool>(
@@ -127,7 +127,7 @@ class FloatingOverlay extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 80,
+                          width: 120,
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 500),
                             transitionBuilder: (child, animation) =>
@@ -135,14 +135,35 @@ class FloatingOverlay extends StatelessWidget {
                                     opacity: animation, child: child),
                             switchInCurve: Curves.easeIn,
                             switchOutCurve: Curves.easeOut,
-                            child: Text(
-                              locked ? '请在托盘解锁' : '点击锁定',
-                              key: ValueKey<bool>(locked),
-                              style: TextStyle(
-                                color: Colors.white
-                                    .withOpacity(provider.controlOpacity),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
+                            child: Align(
+                              alignment: Alignment.centerLeft, // 左对齐
+                              child: Stack(
+                                children: [
+                                  // 描边层
+                                  Text(
+                                    locked ? '请在托盘解锁' : '点击锁定',
+                                    key: ValueKey(
+                                        'stroke-$locked'), // 避免与填充层 key 冲突
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      foreground: Paint()
+                                        ..style = PaintingStyle.stroke
+                                        ..strokeWidth = 2
+                                        ..color = Colors.black, // 描边颜色，可改
+                                    ),
+                                  ),
+                                  // 填充层
+                                  Text(
+                                    locked ? '请在托盘解锁' : '点击锁定',
+                                    key: ValueKey('fill-$locked'),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

@@ -25,7 +25,7 @@ class StrokedText extends StatelessWidget {
     required this.fillColor,
     required this.backgroundColor,
     required this.backgroundOpacity,
-    this.strokeWidth = 1.2, // 不可调
+    this.strokeWidth = 2.8, // 不可调
   });
 
   @override

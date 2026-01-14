@@ -2,6 +2,7 @@ import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../providers/log_provider.dart';
 import '../widgets/unified_background.dart';
@@ -20,213 +21,220 @@ class SettingsPage extends StatelessWidget {
     final Color textColor = _adaptiveTextColor(backgroundColor);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(provider.borderRadius),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: StrokedText(
-            '设置',
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            fillColor: textColor,
-            backgroundColor: backgroundColor,
-            backgroundOpacity: backgroundOpacity,
-          ),
-          backgroundColor: Colors.black.withOpacity(0.4),
-          elevation: 0,
-        ),
-        body: Stack(
-          children: [
-            const Positioned.fill(
-              child: UnifiedBackground(),
+        borderRadius: BorderRadius.circular(provider.borderRadius),
+        child: GestureDetector(
+          onPanStart: (_) async {
+            // 仅在非透明区域触发拖动
+            if (!await windowManager.isMaximized()) {
+              windowManager.startDragging();
+            }
+          },
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              title: StrokedText(
+                '设置',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fillColor: textColor,
+                backgroundColor: backgroundColor,
+                backgroundOpacity: backgroundOpacity,
+              ),
+              backgroundColor: Colors.black.withOpacity(0.4),
+              elevation: 0,
             ),
-            ListView(
-              padding: const EdgeInsets.all(16),
+            body: Stack(
               children: [
-                _sectionTitle(
-                  '界面外观',
-                  textColor,
-                  backgroundColor,
-                  backgroundOpacity,
+                const Positioned.fill(
+                  child: UnifiedBackground(),
                 ),
-                const SizedBox(height: 16),
-                _buildSlider(
-                  label: '窗口圆角 (${provider.borderRadius.toInt()})',
-                  value: provider.borderRadius,
-                  min: 0,
-                  max: 30,
-                  onChanged: provider.setBorderRadius,
-                  textColor: textColor,
-                  backgroundColor: backgroundColor,
-                  backgroundOpacity: backgroundOpacity,
-                ),
-                _buildSlider(
-                  label: '控制栏 / 按钮透明度',
-                  value: provider.controlOpacity,
-                  min: 0.1,
-                  max: 1.0,
-                  onChanged: provider.setControlOpacity,
-                  textColor: textColor,
-                  backgroundColor: backgroundColor,
-                  backgroundOpacity: backgroundOpacity,
-                ),
-                _buildSlider(
-                  label: '背景透明度',
-                  value: provider.bgOpacity,
-                  min: 0.0,
-                  max: 1.0,
-                  onChanged: provider.setBgOpacity,
-                  textColor: textColor,
-                  backgroundColor: backgroundColor,
-                  backgroundOpacity: backgroundOpacity,
-                ),
-                _buildSlider(
-                  label: '便签字体大小 (${provider.fontSize.toInt()})',
-                  value: provider.fontSize,
-                  min: 10,
-                  max: 30,
-                  onChanged: provider.setFontSize,
-                  textColor: textColor,
-                  backgroundColor: backgroundColor,
-                  backgroundOpacity: backgroundOpacity,
-                ),
-                _buildSlider(
-                  label: '便签透明度',
-                  value: provider.noteBgOpacity,
-                  min: 0.0,
-                  max: 1.0,
-                  onChanged: provider.setNoteBgOpacity,
-                  textColor: textColor,
-                  backgroundColor: backgroundColor,
-                  backgroundOpacity: backgroundOpacity,
-                ),
-                const Divider(height: 32, color: Colors.white24),
-                _sectionTitle(
-                  '全局背景',
-                  textColor,
-                  backgroundColor,
-                  backgroundOpacity,
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  title: StrokedText(
-                    '使用背景图片',
-                    fillColor: textColor,
-                    backgroundColor: backgroundColor,
-                    backgroundOpacity: backgroundOpacity,
-                  ),
-                  value: provider.useBackgroundImage,
-                  onChanged: provider.setUseBackgroundImage,
-                ),
-                if (!provider.useBackgroundImage ||
-                    provider.backgroundImage == null)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: StrokedText(
-                      '背景颜色',
-                      fillColor: textColor,
+                ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _sectionTitle(
+                      '界面外观',
+                      textColor,
+                      backgroundColor,
+                      backgroundOpacity,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildSlider(
+                      label: '窗口圆角 (${provider.borderRadius.toInt()})',
+                      value: provider.borderRadius,
+                      min: 0,
+                      max: 30,
+                      onChanged: provider.setBorderRadius,
+                      textColor: textColor,
                       backgroundColor: backgroundColor,
                       backgroundOpacity: backgroundOpacity,
                     ),
-                    trailing: ColorIndicator(
-                      width: 40,
-                      height: 40,
-                      borderRadius: 6,
-                      color: backgroundColor,
-                      onSelectFocus: false,
-                      onSelect: () async {
-                        final Color newColor = await showColorPickerDialog(
-                          context,
-                          backgroundColor,
-                          title: const Text('选择背景颜色'),
-                          enableOpacity: false,
-                        );
-                        provider.setLayoutBackgroundColor(newColor.value);
-                      },
+                    _buildSlider(
+                      label: '控制栏 / 按钮透明度',
+                      value: provider.controlOpacity,
+                      min: 0.1,
+                      max: 1.0,
+                      onChanged: provider.setControlOpacity,
+                      textColor: textColor,
+                      backgroundColor: backgroundColor,
+                      backgroundOpacity: backgroundOpacity,
                     ),
-                  ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: StrokedText(
-                    '背景图片',
-                    fillColor: textColor,
-                    backgroundColor: backgroundColor,
-                    backgroundOpacity: backgroundOpacity,
-                  ),
-                  subtitle: provider.backgroundImage != null
-                      ? Text(
-                          provider.backgroundImage!,
-                          style: TextStyle(
-                            color: textColor.withOpacity(0.7),
-                          ),
-                        )
-                      : Text(
-                          '未设置图片',
-                          style: TextStyle(
-                            color: textColor.withOpacity(0.5),
-                          ),
+                    _buildSlider(
+                      label: '背景透明度',
+                      value: provider.bgOpacity,
+                      min: 0.0,
+                      max: 1.0,
+                      onChanged: provider.setBgOpacity,
+                      textColor: textColor,
+                      backgroundColor: backgroundColor,
+                      backgroundOpacity: backgroundOpacity,
+                    ),
+                    _buildSlider(
+                      label: '便签字体大小 (${provider.fontSize.toInt()})',
+                      value: provider.fontSize,
+                      min: 10,
+                      max: 30,
+                      onChanged: provider.setFontSize,
+                      textColor: textColor,
+                      backgroundColor: backgroundColor,
+                      backgroundOpacity: backgroundOpacity,
+                    ),
+                    _buildSlider(
+                      label: '便签透明度',
+                      value: provider.noteBgOpacity,
+                      min: 0.0,
+                      max: 1.0,
+                      onChanged: provider.setNoteBgOpacity,
+                      textColor: textColor,
+                      backgroundColor: backgroundColor,
+                      backgroundOpacity: backgroundOpacity,
+                    ),
+                    const Divider(height: 32, color: Colors.white24),
+                    _sectionTitle(
+                      '全局背景',
+                      textColor,
+                      backgroundColor,
+                      backgroundOpacity,
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: StrokedText(
+                        '使用背景图片',
+                        fillColor: textColor,
+                        backgroundColor: backgroundColor,
+                        backgroundOpacity: backgroundOpacity,
+                      ),
+                      value: provider.useBackgroundImage,
+                      onChanged: provider.setUseBackgroundImage,
+                    ),
+                    if (!provider.useBackgroundImage ||
+                        provider.backgroundImage == null)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: StrokedText(
+                          '背景颜色',
+                          fillColor: textColor,
+                          backgroundColor: backgroundColor,
+                          backgroundOpacity: backgroundOpacity,
                         ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.upload_file),
-                        color: textColor.withOpacity(0.7),
-                        onPressed: () async {
-                          final path = await pickImageFile();
-                          if (path != null) {
-                            provider.setBackgroundImage(path);
-                          }
+                        trailing: ColorIndicator(
+                          width: 40,
+                          height: 40,
+                          borderRadius: 6,
+                          color: backgroundColor,
+                          onSelectFocus: false,
+                          onSelect: () async {
+                            final Color newColor = await showColorPickerDialog(
+                              context,
+                              backgroundColor,
+                              title: const Text('选择背景颜色'),
+                              enableOpacity: false,
+                            );
+                            provider.setLayoutBackgroundColor(newColor.value);
+                          },
+                        ),
+                      ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: StrokedText(
+                        '背景图片',
+                        fillColor: textColor,
+                        backgroundColor: backgroundColor,
+                        backgroundOpacity: backgroundOpacity,
+                      ),
+                      subtitle: provider.backgroundImage != null
+                          ? Text(
+                              provider.backgroundImage!,
+                              style: TextStyle(
+                                color: textColor.withOpacity(0.7),
+                              ),
+                            )
+                          : Text(
+                              '未设置图片',
+                              style: TextStyle(
+                                color: textColor.withOpacity(0.5),
+                              ),
+                            ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.upload_file),
+                            color: textColor.withOpacity(0.7),
+                            onPressed: () async {
+                              final path = await pickImageFile();
+                              if (path != null) {
+                                provider.setBackgroundImage(path);
+                              }
+                            },
+                          ),
+                          if (provider.backgroundImage != null)
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              color: textColor.withOpacity(0.7),
+                              onPressed: provider.removeBackgroundImage,
+                            ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 32, color: Colors.white24),
+                    _sectionTitle(
+                      '便签整体样式',
+                      textColor,
+                      backgroundColor,
+                      backgroundOpacity,
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: StrokedText(
+                        '便签整体背景色',
+                        fillColor: textColor,
+                        backgroundColor: backgroundColor,
+                        backgroundOpacity: backgroundOpacity,
+                      ),
+                      trailing: ColorIndicator(
+                        width: 40,
+                        height: 40,
+                        borderRadius: 6,
+                        color: Color(provider.noteBackgroundColor),
+                        onSelectFocus: false,
+                        onSelect: () async {
+                          final Color newColor = await showColorPickerDialog(
+                            context,
+                            Color(provider.noteBackgroundColor),
+                            title: const Text('便签整体背景色'),
+                            enableOpacity: false,
+                          );
+                          provider.setNoteBackgroundColor(newColor.value);
                         },
                       ),
-                      if (provider.backgroundImage != null)
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          color: textColor.withOpacity(0.7),
-                          onPressed: provider.removeBackgroundImage,
-                        ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 32, color: Colors.white24),
-                _sectionTitle(
-                  '便签整体样式',
-                  textColor,
-                  backgroundColor,
-                  backgroundOpacity,
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: StrokedText(
-                    '便签整体背景色',
-                    fillColor: textColor,
-                    backgroundColor: backgroundColor,
-                    backgroundOpacity: backgroundOpacity,
-                  ),
-                  trailing: ColorIndicator(
-                    width: 40,
-                    height: 40,
-                    borderRadius: 6,
-                    color: Color(provider.noteBackgroundColor),
-                    onSelectFocus: false,
-                    onSelect: () async {
-                      final Color newColor = await showColorPickerDialog(
-                        context,
-                        Color(provider.noteBackgroundColor),
-                        title: const Text('便签整体背景色'),
-                        enableOpacity: false,
-                      );
-                      provider.setNoteBackgroundColor(newColor.value);
-                    },
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        ));
   }
 
   // ===== 分组标题 =====
