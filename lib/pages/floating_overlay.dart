@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'package:floating_log_app/pages/edit_page.dart';
+import 'package:floating_log_app/pages/settings_page.dart';
+import 'package:floating_log_app/routes/no_animation_route.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -68,7 +71,9 @@ class FloatingOverlay extends StatelessWidget {
               child: Center(
                 child: TextButton.icon(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/edit');
+                    Navigator.of(context).push(
+                      NoAnimationRoute(page: const EditPage()),
+                    );
                   },
                   icon: Icon(Icons.edit,
                       size: 16,
@@ -157,7 +162,9 @@ class FloatingOverlay extends StatelessWidget {
                 icon: const Icon(Icons.settings, size: 20),
                 color: Colors.white.withOpacity(provider.controlOpacity),
                 onPressed: () {
-                  Navigator.pushNamed(context, '/settings');
+                  Navigator.of(context).push(
+                    NoAnimationRoute(page: const SettingsPage()),
+                  );
                 },
               ),
             ),
