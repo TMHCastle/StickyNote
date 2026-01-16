@@ -174,15 +174,17 @@ class _EditPageState extends State<EditPage> {
                   ),
                 ),
 
-                // ===== 日志列表 =====
+// ===== 日志列表（可拖动）=====
                 Expanded(
-                  child: ListView.builder(
+                  child: ReorderableListView.builder(
                     padding: const EdgeInsets.only(bottom: 8),
+                    onReorder: provider.reorderLogs,
                     itemCount: provider.logs.length,
                     itemBuilder: (context, index) {
                       final LogEntry log = provider.logs[index];
 
                       return ListTile(
+                        key: ValueKey(log.id), // 必须
                         leading: Container(
                           width: 4,
                           color: log.backgroundColor != null
@@ -202,9 +204,9 @@ class _EditPageState extends State<EditPage> {
                           style: const TextStyle(color: Colors.white60),
                         ),
                         onTap: () => _enterEdit(log),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.white70),
-                          onPressed: () => provider.removeLog(log.id),
+                        trailing: const Icon(
+                          Icons.drag_handle,
+                          color: Colors.white70,
                         ),
                       );
                     },

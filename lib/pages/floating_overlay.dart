@@ -22,8 +22,8 @@ class FloatingOverlay extends StatelessWidget {
         children: [
           // ===== 背景层（始终可拖动）=====
           Positioned.fill(
-            child: GestureDetector(
-              onPanStart: (_) => windowManager.startDragging(),
+            child: Listener(
+              onPointerDown: (_) => windowManager.startDragging(),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(provider.borderRadius),
@@ -44,18 +44,26 @@ class FloatingOverlay extends StatelessWidget {
 
           // ===== 主内容层（便签列表）=====
           Positioned.fill(
-            top: 52, // 给顶部锁定按钮留空间
+            top: 52,
             child: IgnorePointer(
-              ignoring: provider.locked, // 锁定时穿透鼠标
-              child: ListView(
+              ignoring: provider.locked,
+              child: ReorderableListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                children: provider.logs
-                    .map<Widget>((log) => LogItemWidget(
-                          log: log,
-                          noteOpacity: provider.noteBgOpacity,
-                          fontSize: provider.fontSize,
-                        ))
-                    .toList(),
+                buildDefaultDragHandles: false,
+                onReorder: provider.reorderLogs,
+                itemCount: provider.logs.length,
+                itemBuilder: (context, index) {
+                  final log = provider.logs[index];
+                  return ReorderableDelayedDragStartListener(
+                    key: ValueKey(log.id), // 必须
+                    index: index,
+                    child: LogItemWidget(
+                      log: log,
+                      noteOpacity: provider.noteBgOpacity,
+                      fontSize: provider.fontSize,
+                    ),
+                  );
+                },
               ),
             ),
           ),

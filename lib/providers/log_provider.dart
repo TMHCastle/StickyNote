@@ -195,6 +195,25 @@ class LogProvider extends ChangeNotifier {
     _windowHeight = box.get('windowHeight', defaultValue: 600.0);
   }
 
+  /// 日志拖动排序（ReorderableListView 使用）
+  void reorderLogs(int oldIndex, int newIndex) {
+    if (oldIndex < 0 || oldIndex >= _logs.length) return;
+    if (newIndex < 0 || newIndex > _logs.length) return;
+
+    // Flutter 官方推荐写法
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+
+    final item = _logs.removeAt(oldIndex);
+    _logs.insert(newIndex, item);
+
+    // 🔒 立刻持久化顺序
+    saveLogs();
+
+    notifyListeners();
+  }
+
   // ================= 分类 =================
   final List<String> _categories = ['默认', '工作', '生活', '重要'];
   List<String> get categories => _categories;
