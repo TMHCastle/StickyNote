@@ -204,9 +204,30 @@ class _EditPageState extends State<EditPage> {
                           style: const TextStyle(color: Colors.white60),
                         ),
                         onTap: () => _enterEdit(log),
-                        trailing: const Icon(
-                          Icons.drag_handle,
-                          color: Colors.white70,
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // 删除按钮
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              color: Colors.redAccent.withOpacity(0.8),
+                              tooltip: '删除',
+                              onPressed: () {
+                                context.read<LogProvider>().removeLog(log.id);
+
+                                // 如果正在编辑当前项，顺便重置表单
+                                if (editingId == log.id) {
+                                  _resetForm();
+                                }
+                              },
+                            ),
+
+                            // 拖拽手柄
+                            const Icon(
+                              Icons.drag_handle,
+                              color: Colors.white70,
+                            ),
+                          ],
                         ),
                       );
                     },
