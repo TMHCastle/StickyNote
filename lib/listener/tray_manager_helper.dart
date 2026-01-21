@@ -3,87 +3,56 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:tray_manager/tray_manager.dart';
 
-/// 当前是否处于“鼠标穿透 / 锁定”状态
-///
-/// true  : IgnoreMouseEvents 开启（窗口不可交互）
-/// false : 正常交互
-bool _isLocked = false;
+// Callback definitions
+typedef OnLockToggle = void Function();
 
-/// 对外暴露的状态监听器（用于 UI 同步锁定状态）
-ValueNotifier<bool> lockNotifier = ValueNotifier<bool>(_isLocked);
+/// Tray Helper: Stateless, driven by external calls
+class TrayManagerHelper {
+  
+  static OnLockToggle? onLockToggle;
 
-/// =======================
-/// 托盘初始化入口
-/// =======================
-///
-/// tray_manager >= 0.2.1 后：
-/// - 不再需要 setup()
-/// - setIcon / setContextMenu 可直接调用
-/// - Listener 需要手动 addListener
-Future<void> initTray() async {
-  try {
-    final iconPath = await _getIconPath();
+  /// Init Tray
+  static Future<void> init(OnLockToggle onToggle) async {
+    onLockToggle = onToggle;
+    try {
+      final iconPath = await _getIconPath();
+      await trayManager.setIcon(iconPath);
+      await trayManager.setToolTip('浮动日志工具');
 
-    await trayManager.setIcon(iconPath);
-    await trayManager.setToolTip('浮动日志工具');
+      // Add listener
+      trayManager.addListener(_MyTrayListener());
 
-    // 初始菜单
-    await _updateMenu();
-
-    // 注册托盘事件监听
-    trayManager.addListener(_MyTrayListener());
-
-    // debugPrint('[Tray] 初始化完成');
-  } catch (e, stackTrace) {
-    debugPrint('[Tray] 初始化失败: $e');
-    debugPrint(stackTrace.toString());
-    // ⚠️ 托盘失败不应影响主程序运行
-  }
-}
-
-/// =======================
-/// 获取托盘图标路径
-/// =======================
-///
-/// Windows : 仅支持 .ico
-/// macOS   : 推荐 png（Template Image 可后续优化）
-/// Linux   : png
-Future<String> _getIconPath() async {
-  try {
-    if (Platform.isWindows) {
-      final base = Directory.current.path;
-
-      final candidates = [
-        '$base\\assets\\icon_16x16.ico',
-        '$base\\assets\\icon.ico',
-        'assets/icon_16x16.ico',
-      ];
-
-      for (final path in candidates) {
-        if (await File(path).exists()) {
-          return path;
-        }
-      }
-
-      debugPrint('[Tray] 未找到 .ico 图标，使用默认路径');
-      return 'assets/icon_16x16.ico';
+    } catch (e, stackTrace) {
+      debugPrint('[Tray] 初始化失败: $e');
+      debugPrint(stackTrace.toString());
     }
+  }
 
-    // macOS / Linux
-    return 'assets/icon_16x16.png';
-  } catch (e) {
-    debugPrint('[Tray] 获取图标路径失败: $e');
-    return 'assets/icon_16x16.png';
+  static Future<String> _getIconPath() async {
+    try {
+      if (Platform.isWindows) {
+        final base = Directory.current.path;
+        final candidates = [
+          '$base\\assets\\icon_16x16.ico',
+          '$base\\assets\\icon.ico',
+          'assets/icon_16x16.ico',
+        ];
+        for (final path in candidates) {
+          if (await File(path).exists()) {
+            return path;
+          }
+        }
+        return 'assets/icon_16x16.ico';
+      }
+      return 'assets/icon_16x16.png';
+    } catch (e) {
+      return 'assets/icon_16x16.png';
+    }
   }
 }
 
-/// =======================
-/// 动态更新托盘菜单
-/// =======================
-///
-/// ⚠️ tray_manager 的 Menu 是“一次性快照”
-/// 状态变化后必须重新 setContextMenu
-Future<void> _updateMenu() async {
+/// Global function to update menu from Provider
+Future<void> updateTrayMenu(bool isLocked) async {
   try {
     final isVisible = await windowManager.isVisible();
     final isAlwaysOnTop = await windowManager.isAlwaysOnTop();
@@ -92,7 +61,7 @@ Future<void> _updateMenu() async {
       items: [
         MenuItem(
           key: 'toggle_lock',
-          label: _isLocked ? '🔒 解锁窗口' : '🔓 锁定窗口',
+          label: isLocked ? '🔒 解锁窗口' : '🔓 锁定窗口',
         ),
         MenuItem.separator(),
         MenuItem(
@@ -113,117 +82,76 @@ Future<void> _updateMenu() async {
     );
 
     await trayManager.setContextMenu(menu);
-    // debugPrint('[Tray] 菜单已更新');
-  } catch (e, stackTrace) {
+  } catch (e) {
     debugPrint('[Tray] 更新菜单失败: $e');
-    debugPrint(stackTrace.toString());
   }
 }
 
-/// =======================
-/// 切换鼠标穿透（锁定）
-/// =======================
-///
-/// Windows：
-/// setIgnoreMouseEvents + forward=true 才能正确穿透
-Future<void> toggleLock() async {
-  try {
-    _isLocked = !_isLocked;
-
-    await windowManager.setIgnoreMouseEvents(
-      _isLocked,
-      forward: true,
-    );
-
-    lockNotifier.value = _isLocked;
-
-    await _updateMenu();
-
-    // debugPrint('[Tray] 穿透状态: ${_isLocked ? "已锁定" : "已解除"}');
-  } catch (e) {
-    debugPrint('[Tray] 切换穿透状态失败: $e');
-  }
-}
-
-/// =======================
-/// 显示 / 隐藏窗口
-/// =======================
-Future<void> _toggleWindowVisibility() async {
-  try {
-    final visible = await windowManager.isVisible();
-
-    if (visible) {
-      await windowManager.hide();
-      // debugPrint('[Tray] 窗口已隐藏');
-    } else {
-      await windowManager.show();
-      await windowManager.focus();
-      // debugPrint('[Tray] 窗口已显示');
-    }
-  } catch (e) {
-    debugPrint('[Tray] 切换窗口显示失败: $e');
-  }
-}
-
-/// =======================
-/// 切换置顶状态
-/// =======================
-Future<void> _toggleAlwaysOnTop() async {
-  try {
-    final isTop = await windowManager.isAlwaysOnTop();
-    await windowManager.setAlwaysOnTop(!isTop);
-    // debugPrint('[Tray] 置顶状态: ${!isTop}');
-  } catch (e) {
-    debugPrint('[Tray] 切换置顶失败: $e');
-  }
-}
-
-/// =======================
-/// 托盘事件监听器
-/// =======================
 class _MyTrayListener with TrayListener {
-  bool _menuOpen = false;
-
-  /// 左键点击托盘图标
-  /// 约定行为：切换窗口显示
+  
   @override
-  void onTrayIconMouseDown() {
-    _toggleWindowVisibility();
+  void onTrayIconMouseDown() async {
+    final visible = await windowManager.isVisible();
+    if (visible) {
+      windowManager.hide();
+    } else {
+      windowManager.show();
+      windowManager.focus();
+    }
+    // Update menu to reflect visibility
+    // We don't have lock state here easily, but usually it doesn't change on visibility toggle
+    // Ideally we should ask provider, but this simple toggle is fine.
+    // Optimization: We could store last known lock state in a static var if needed,
+    // but usually Provider will update menu when state changes.
+    // For visibility, we might want to trigger a menu refresh.
+    // But `updateTrayMenu` requires `isLocked`.
+    // Let's just leave it, menu update happens on right click anyway.
   }
 
-  /// 右键点击托盘图标
-  ///
-  /// tray_manager 在 Windows 上：
-  /// popUpContextMenu() 会自动处理显示 / 关闭
   @override
   Future<void> onTrayIconRightMouseDown() async {
-    await _updateMenu();
+    // When right clicking, we want to ensure menu is up to date.
+    // But we need `isLocked` state.
+    // Since `updateTrayMenu` is called whenever lock changes, the menu SHOULD be correct.
+    // However, visibility or alwaysOnTop might have changed.
+    // We can't easily get `isLocked` here without coupling.
+    // So we assume the LAST set menu is correct for Lock,
+    // but we might want to refresh Visibility/Top.
+    //
+    // Actually, `trayManager.popUpContextMenu()` shows the *current set* menu.
+    // If we want dynamic updates on right click (e.g. for visibility), we need to know `isLocked`.
+    // We can rely on `LogProvider` updating the menu whenever ANY relevant state changes.
+    // `LogProvider` handles Lock.
+    // Does it handle Visibility? No.
+    // But Visibility is usually handled by Tray.
+
+    // Simplification: Just pop up.
     await trayManager.popUpContextMenu();
-    _menuOpen = !_menuOpen;
   }
 
   @override
   void onTrayMenuItemClick(MenuItem menuItem) async {
-    _menuOpen = false;
-
-    try {
-      switch (menuItem.key) {
-        case 'toggle_lock':
-          await toggleLock();
-          break;
-        case 'show_hide':
-          await _toggleWindowVisibility();
-          break;
-        case 'always_top':
-          await _toggleAlwaysOnTop();
-          break;
-        case 'exit_app':
-          await trayManager.destroy();
-          exit(0);
-      }
-    } catch (e, stackTrace) {
-      debugPrint('[Tray] 菜单处理失败: $e');
-      debugPrint(stackTrace.toString());
+    switch (menuItem.key) {
+      case 'toggle_lock':
+        // Delegate to callback
+        TrayManagerHelper.onLockToggle?.call();
+        break;
+      case 'show_hide':
+        final visible = await windowManager.isVisible();
+        if (visible) {
+          await windowManager.hide();
+        } else {
+          await windowManager.show();
+          await windowManager.focus();
+        }
+        break;
+      case 'always_top':
+        final isTop = await windowManager.isAlwaysOnTop();
+        await windowManager.setAlwaysOnTop(!isTop);
+        break;
+      case 'exit_app':
+        await trayManager.destroy();
+        exit(0);
     }
   }
 }

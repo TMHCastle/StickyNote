@@ -40,12 +40,12 @@ class LogItemWidget extends StatelessWidget {
         : Colors.white;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 6), // Increased spacing
+      margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(
-          horizontal: 10, vertical: 8), // More internal padding
+          horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: baseColor.withOpacity(baseColor.opacity * noteOpacity),
-        borderRadius: BorderRadius.circular(8), // Rounded
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -55,7 +55,7 @@ class LogItemWidget extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center, // Main row centered
         children: [
           // 1. Confirm Checkbox
           SizedBox(
@@ -91,6 +91,7 @@ class LogItemWidget extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       if (categoryName != '默认')
                         Container(

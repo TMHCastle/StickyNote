@@ -31,7 +31,7 @@ class _SettingsPopupState extends State<SettingsPopup> {
       decoration: BoxDecoration(
         color: popupBgColor,
         border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
-        borderRadius: BorderRadius.circular(12), // More rounded
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withOpacity(0.5),
@@ -103,9 +103,11 @@ class _SettingsPopupState extends State<SettingsPopup> {
             label: AppStrings.get(context, 'language'),
             textColor: textColor,
             value: provider.locale,
-            items: const [
-              DropdownMenuItem(value: 'zh', child: Text('中文')),
-              DropdownMenuItem(value: 'en', child: Text('English')),
+            items: [
+              DropdownMenuItem(
+                  value: 'zh', child: Text(AppStrings.get(context, 'chinese'))),
+              DropdownMenuItem(
+                  value: 'en', child: Text(AppStrings.get(context, 'english'))),
             ],
             onChanged: (v) {
               if (v != null) provider.setLocale(v);
@@ -117,7 +119,7 @@ class _SettingsPopupState extends State<SettingsPopup> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Sort Order',
+              Text(AppStrings.get(context, 'sortOrder'),
                   style: TextStyle(color: textColor, fontSize: 13)),
               GestureDetector(
                 onTap: provider.toggleSortOrder,
@@ -139,8 +141,8 @@ class _SettingsPopupState extends State<SettingsPopup> {
                       const SizedBox(width: 4),
                       Text(
                           provider.sortAscending
-                              ? 'Oldest First'
-                              : 'Newest First',
+                              ? AppStrings.get(context, 'oldestFirst')
+                              : AppStrings.get(context, 'newestFirst'),
                           style: TextStyle(color: textColor, fontSize: 12)),
                     ],
                   ),
@@ -162,8 +164,7 @@ class _SettingsPopupState extends State<SettingsPopup> {
           ),
           
           const SizedBox(height: 12),
-          // === Moved to Basic: Background & Image ===
-
+           
           _buildSlider(
             label: AppStrings.get(context, 'bgOpacity'),
             value: provider.bgOpacity,
@@ -335,7 +336,6 @@ class _SettingsPopupState extends State<SettingsPopup> {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Column(
         children: [
-          // === Moved here from Basic: Note Opacity & Control Opacity ===
           _buildSlider(
             label: AppStrings.get(context, 'noteOpacity'),
             value: provider.noteBgOpacity,
@@ -421,7 +421,9 @@ class _SettingsPopupState extends State<SettingsPopup> {
         builder: (ctx, setState) => AlertDialog(
           backgroundColor: Colors.grey[900],
           title: Text(
-              isNew ? AppStrings.get(context, 'addCategory') : 'Edit Tag',
+              isNew
+                  ? AppStrings.get(context, 'addCategory')
+                  : AppStrings.get(context, 'editTag'),
               style: const TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -471,13 +473,14 @@ class _SettingsPopupState extends State<SettingsPopup> {
                   if (isNew) {
                     provider.addCategory(nameCtrl.text.trim(), color.value);
                   } else {
-                    provider.removeCategory(category.name, deleteLogs: false);
-                    provider.addCategory(nameCtrl.text.trim(), color.value);
+                    // Use Update Logic to preserve logs
+                    provider.updateCategory(
+                        category.name, nameCtrl.text.trim(), color.value);
                   }
                 }
                 Navigator.pop(ctx);
               },
-              child: Text(AppStrings.get(context, 'add')),
+              child: Text(AppStrings.get(context, 'add')), // "Add/OK"
             ),
           ],
         ),
@@ -546,13 +549,13 @@ class _SettingsPopupState extends State<SettingsPopup> {
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel')),
+                  child: Text(AppStrings.get(context, 'cancel'))),
               TextButton(
                   onPressed: () {
                     onConfirm(temp);
                     Navigator.pop(ctx);
                   },
-                  child: const Text('Confirm')),
+                  child: Text(AppStrings.get(context, 'confirm'))),
             ],
           );
         });

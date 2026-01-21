@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/app_strings.dart';
 
 class ThreeBarColorPicker extends StatefulWidget {
   final Color color;
@@ -35,7 +36,6 @@ class _ThreeBarColorPickerState extends State<ThreeBarColorPicker> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.color != widget.color) {
       final hsv = HSVColor.fromColor(widget.color);
-      // Only update if significantly different to prevent sliding jitter
       if ((hsv.hue - _hue).abs() > 1 ||
           (hsv.saturation - _saturation).abs() > 0.01 ||
           (hsv.value - _value).abs() > 0.01 ||
@@ -55,12 +55,18 @@ class _ThreeBarColorPickerState extends State<ThreeBarColorPicker> {
 
   @override
   Widget build(BuildContext context) {
+    // Current solid color (without alpha) for the opacity slider gradient
+    final baseColor = HSVColor.fromAHSV(1, _hue, _saturation, _value).toColor();
+    // Complete current color for preview
+    final currentColor =
+        HSVColor.fromAHSV(_opacity, _hue, _saturation, _value).toColor();
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. Hue Slider (Gradient)
-        _buildLabel('Color (Hue)'),
+        // 1. Hue
+        _buildLabel(AppStrings.get(context, 'hue')),
         _buildGradientSlider(
           value: _hue,
           min: 0,
@@ -80,8 +86,8 @@ class _ThreeBarColorPickerState extends State<ThreeBarColorPicker> {
           ],
         ),
 
-        // 2. Saturation/Value
-        _buildLabel('Saturation/Depth'),
+        // 2. Saturation
+        _buildLabel(AppStrings.get(context, 'saturation')),
          _buildGradientSlider(
           value: _saturation,
           min: 0,
@@ -96,41 +102,79 @@ class _ThreeBarColorPickerState extends State<ThreeBarColorPicker> {
           ],
         ),
         
-        // 3. Opacity
-        _buildLabel('Transparency'),
-        _buildGradientSlider(
-          value: _opacity,
-          min: 0,
-          max: 1,
-          onChanged: (v) {
-            setState(() => _opacity = v);
-            _updateColor();
-          },
-          colors: [
-            Colors.transparent,
-            HSVColor.fromAHSV(1, _hue, _saturation, _value).toColor(),
-          ],
+        // 3. Opacity (Transparency)
+        _buildLabel(AppStrings.get(context, 'transparency')),
+        // Stack to show checkerboard behind the gradient
+        SizedBox(
+          height: 24,
+          child: Stack(
+            children: [
+              // Checkerboard background for the track
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: CustomPaint(painter: CheckerboardPainter()),
+                ),
+              ),
+              // actual slider
+              _buildGradientSlider(
+                value: _opacity,
+                min: 0,
+                max: 1,
+                onChanged: (v) {
+                  setState(() => _opacity = v);
+                  _updateColor();
+                },
+                colors: [
+                  Colors
+                      .transparent, // Displays as transparent on top of checkerboard
+                  baseColor,
+                ],
+              ),
+            ],
+          ),
         ),
         
         // Preview
         Padding(
-          padding: const EdgeInsets.only(top: 8.0),
+          padding: const EdgeInsets.only(top: 12.0),
           child: Row(
             children: [
+              // Use Checkerboard here too for the preview box (Square now)
+              // Use Checkerboard here too for the preview box (Square now)
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  color: widget.color,
-                  shape: BoxShape.circle,
+                // Use foregroundDecoration to draw border ON TOP of the content
+                foregroundDecoration: BoxDecoration(
+                  borderRadius:
+                      BorderRadius.circular(8), // Square-ish with radius
                   border: Border.all(color: Colors.white24),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CustomPaint(
+                    foregroundPainter:
+                        _ColorPainter(
+                        currentColor), // Use calculated currentColor
+                    painter: CheckerboardPainter(), // Checkerboard below
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                '#${widget.color.value.toRadixString(16).toUpperCase().padLeft(8, '0')}',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${AppStrings.get(context, 'hexLabel')}: #${currentColor.value.toRadixString(16).toUpperCase().padLeft(8, '0')}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  Text(
+                    '${AppStrings.get(context, 'alphaLabel')}: ${(_opacity * 100).toInt()}%',
+                    style: const TextStyle(color: Colors.white38, fontSize: 11),
+                  ),
+                ],
+              )
             ],
           ),
         ),
@@ -140,7 +184,7 @@ class _ThreeBarColorPickerState extends State<ThreeBarColorPicker> {
   
   Widget _buildLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 2, top: 8),
+      padding: const EdgeInsets.only(left: 4, bottom: 4, top: 10),
       child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 11)),
     );
   }
@@ -195,4 +239,41 @@ class _CustomTrackShape extends RoundedRectSliderTrackShape {
     final double trackWidth = parentBox.size.width;
     return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
   }
+}
+
+class CheckerboardPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.grey[400]!;
+    final paint2 = Paint()
+      ..color = Colors.grey[300]!; // Light grey checkerboard
+
+    // Draw white/grey grid
+    double sizeSquare = 8;
+    for (double y = 0; y < size.height; y += sizeSquare) {
+      for (double x = 0; x < size.width; x += sizeSquare) {
+        if (((x / sizeSquare).floor() + (y / sizeSquare).floor()) % 2 == 0) {
+          canvas.drawRect(Rect.fromLTWH(x, y, sizeSquare, sizeSquare), paint);
+        } else {
+          canvas.drawRect(Rect.fromLTWH(x, y, sizeSquare, sizeSquare), paint2);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _ColorPainter extends CustomPainter {
+  final Color color;
+  _ColorPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

@@ -179,10 +179,12 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
           Row(
             children: [
               _buildColorOption(
-                  'Text', _color, (c) => setState(() => _color = c)),
+                  AppStrings.get(context, 'textColorLabel'),
+                  _color, (c) => setState(() => _color = c)),
               const SizedBox(width: 16),
               _buildColorOption(
-                  'Bg', _bgColor, (c) => setState(() => _bgColor = c)),
+                  AppStrings.get(context, 'bgColorLabel'),
+                  _bgColor, (c) => setState(() => _bgColor = c)),
               const Spacer(),
               if (_color != null || _bgColor != null)
                 TextButton.icon(
@@ -192,8 +194,9 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
                   }),
                   icon: const Icon(Icons.format_clear,
                       size: 14, color: Colors.white54),
-                  label: const Text('Reset',
-                      style: TextStyle(fontSize: 12, color: Colors.white54)),
+                  label: Text(AppStrings.get(context, 'reset'),
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.white54)),
                   style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
                       minimumSize: Size.zero,
@@ -319,8 +322,15 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
                   ThreeBarColorPicker(color: temp, onChanged: (c) => temp = c),
            ),
            actions: [
-             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-             TextButton(onPressed: () { onPick(temp); Navigator.pop(ctx); }, child: const Text('Confirm')),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(AppStrings.get(context, 'cancel'))),
+              TextButton(
+                  onPressed: () {
+                    onPick(temp);
+                    Navigator.pop(ctx);
+                  },
+                  child: Text(AppStrings.get(context, 'confirm'))),
            ],
          );
        }

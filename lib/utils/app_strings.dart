@@ -1,176 +1,199 @@
-import 'package:flutter/widgets.dart';
-import '../providers/log_provider.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/log_provider.dart';
 
 class AppStrings {
   static const Map<String, Map<String, String>> _localizedValues = {
-    // FloatingOverlay
-    'clickToLock': {
-      'zh': '点击锁定',
-      'en': 'Click to Lock',
+    'title': {
+      'zh': '悬浮笔记',
+      'en': 'Suspension Note',
     },
-    'unlockInTray': {
-      'zh': '点击解锁',
-      'en': 'Click to Unlock',
-    },
-    'edit': {
-      'zh': '编辑',
-      'en': 'Edit',
-    },
-
-    // EditPage
     'addLog': {
       'zh': '新增日志',
       'en': 'Add Log',
     },
     'editLog': {
-      'zh': '修改日志',
+      'zh': '编辑日志',
       'en': 'Edit Log',
     },
-    'enterContent': {
-      'zh': '输入便签内容',
-      'en': 'Enter note content',
-    },
-    'cancelEdit': {
-      'zh': '取消编辑',
-      'en': 'Cancel Edit',
-    },
-    'addCategory': {
-      'zh': '添加分类',
-      'en': 'Add Category',
-    },
-    'textColor': {
-      'zh': '文字颜色',
-      'en': 'Text Color',
-    },
-    'bgColor': {
-      'zh': '背景颜色',
-      'en': 'Bg Color',
-    },
-    'delete': {
-      'zh': '删除',
-      'en': 'Delete',
-    },
-    'cancel': {
-      'zh': '取消',
-      'en': 'Cancel',
-    },
-    'add': {
-      'zh': '添加',
-      'en': 'Add',
-    },
-
-    // SettingsPage
     'settings': {
       'zh': '设置',
       'en': 'Settings',
     },
-    'basicSettings': {
-      'zh': '基础设置',
-      'en': 'Basic Settings',
-    },
-    'advancedSettings': {
-      'zh': '高级设置',
-      'en': 'Advanced Settings',
-    },
-    'resetDefaults': {
-      'zh': '恢复默认',
-      'en': 'Reset Defaults',
-    },
-    'resetConfirm': {
-      'zh': '确定恢复默认设置吗？',
-      'en': 'Reset all settings to default?',
-    },
-    'appearance': {
-      'zh': '界面外观',
-      'en': 'Appearance',
-    },
-    'controlOpacity': {
-      'zh': '控制栏 / 按钮透明度',
-      'en': 'Control Bar / Button Opacity',
-    },
-    'bgOpacity': {
-      'zh': '背景透明度',
-      'en': 'Background Opacity',
+    'language': {
+      'zh': '语言 / Language',
+      'en': 'Language',
     },
     'noteFontSize': {
-      'zh': '便签字体大小',
-      'en': 'Note Font Size',
+      'zh': '便签字号',
+      'en': 'Font Size',
     },
     'noteOpacity': {
-      'zh': '便签透明度',
+      'zh': '便签不透明度',
       'en': 'Note Opacity',
     },
-    'globalBackground': {
-      'zh': '全局背景',
-      'en': 'Global Background',
+    'controlOpacity': {
+      'zh': '控件不透明度',
+      'en': 'Control Opacity',
     },
-    'useBgImage': {
-      'zh': '使用背景图片',
-      'en': 'Use Background Image',
+    'bgOpacity': {
+      'zh': '背景不透明度',
+      'en':
+          'Details Opacity', // "Background" contextually means the panel background
     },
-    'pickBgColor': {
-      'zh': '选择背景颜色',
-      'en': 'Pick Background Color',
+    'bgColor': {
+      'zh': '背景颜色',
+      'en': 'Background Color',
     },
     'bgImage': {
       'zh': '背景图片',
       'en': 'Background Image',
     },
-    'noImageSet': {
-      'zh': '未设置图片',
-      'en': 'No Image Set',
+    'useBgImage': {
+      'zh': '使用背景图片',
+      'en': 'Use Image',
     },
-    'language': {
-      'zh': '语言 / Language',
-      'en': 'Language / 语言',
+    'noImageSet': {
+      'zh': '未设置',
+      'en': 'None',
     },
     'manageTags': {
-      'zh': '标签/分类管理',
+      'zh': '标签管理',
       'en': 'Manage Tags',
     },
     'tagName': {
-      'zh': '名称',
-      'en': 'Name',
+      'zh': '标签名称',
+      'en': 'Tag Name',
     },
     'tagColor': {
-      'zh': '颜色',
+      'zh': '标签颜色',
       'en': 'Color',
+    },
+    'enterContent': {
+      'zh': '输入内容...',
+      'en': 'Enter content...',
+    },
+    'confirm': {
+      'zh': '确认',
+      'en': 'Confirm',
+    },
+    'cancel': {
+      'zh': '取消',
+      'en': 'Cancel',
+    },
+    'delete': {
+      'zh': '删除',
+      'en': 'Delete',
+    },
+    'add': {
+      'zh': '添加',
+      'en': 'Add',
+    },
+    'edit': {
+      'zh': '修改',
+      'en': 'Edit',
+    },
+    'addCategory': {
+      'zh': '添加标签',
+      'en': 'Add Tag',
     },
     'deleteTagTitle': {
       'zh': '删除标签',
       'en': 'Delete Tag',
     },
     'deleteTagConfirm': {
-      'zh': '如何处理该标签下的便签？',
-      'en': 'How to handle logs in this tag?',
+      'zh': '您确定要删除此标签吗？',
+      'en': 'Delete this tag?',
     },
     'deleteAction': {
-      'zh': '彻底删除 (包括便签)',
-      'en': 'Deep Delete (Incl. Logs)',
+      'zh': '删除标签及日志',
+      'en': 'Delete Tag & Logs',
     },
     'dissolveAction': {
-      'zh': '仅解散 (便签归入默认)',
-      'en': 'Dissolve (Logs to Default)',
+      'zh': '仅移除标签',
+      'en': 'Remove Tag Only',
+    },
+    'advancedSettings': {
+      'zh': '高级设置',
+      'en': 'Advanced',
+    },
+    // Simplified Lock Text
+    'clickToLock': {
+      'zh': '点击锁定', // Or simply '锁定'
+      'en': 'Lock',
+    },
+    'unlockInTray': {
+      'zh': '点击解锁', // Simplified from '去托盘解锁'
+      'en': 'Unlock',
+    },
+    'sortOrder': {
+      'zh': '排序方式',
+      'en': 'Sort Order',
+    },
+    'oldestFirst': {
+      'zh': '最早在前',
+      'en': 'Oldest First',
+    },
+    'newestFirst': {
+      'zh': '最新在前',
+      'en': 'Newest First',
+    },
+    'chinese': {
+      'zh': '中文',
+      'en': 'Chinese',
+    },
+    'english': {
+      'zh': '英文',
+      'en': 'English',
+    },
+    'default': {
+      'zh': '默认',
+      'en': 'Default',
+    },
+    'editTag': {
+      'zh': '编辑标签',
+      'en': 'Edit Tag',
+    },
+    'hue': {
+      'zh': '色相',
+      'en': 'Hue',
+    },
+    'saturation': {
+      'zh': '饱和度',
+      'en': 'Saturation',
+    },
+    'transparency': {
+      'zh': '透明度',
+      'en': 'Transparency',
+    },
+    'reset': {
+      'zh': '重置',
+      'en': 'Reset',
+    },
+    'textColorLabel': {
+      'zh': '文字',
+      'en': 'Text',
+    },
+    'bgColorLabel': {
+      'zh': '背景',
+      'en': 'Bg',
+    },
+    'hexLabel': {
+      'zh': 'HEX',
+      'en': 'HEX',
+    },
+    'alphaLabel': {
+      'zh': 'Alpha', // Or 透明度
+      'en': 'Alpha',
     },
   };
 
   static String get(BuildContext context, String key) {
-    // Read the locale directly from LogProvider without listening constantly if used in non-reactive way,
-    // but usually we want to listen.
-    // However, to simplify usage: AppStrings.of(context).text(key) or just static helper
-    // Let's rely on the Provider being present.
     try {
       final locale = context.read<LogProvider>().locale;
       return _localizedValues[key]?[locale] ?? _localizedValues[key]?['zh'] ?? key;
     } catch (_) {
       return _localizedValues[key]?['zh'] ?? key;
     }
-  }
-
-  // Reactive helper
-  static String of(BuildContext context, String key) {
-    final locale = context.select<LogProvider, String>((p) => p.locale);
-    return _localizedValues[key]?[locale] ?? _localizedValues[key]?['zh'] ?? key;
   }
 }

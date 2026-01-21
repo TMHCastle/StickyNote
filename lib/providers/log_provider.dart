@@ -4,12 +4,12 @@ import 'package:uuid/uuid.dart';
 import 'package:window_manager/window_manager.dart';
 import '../models/log_entry.dart';
 import '../models/category_model.dart';
+import '../listener/tray_manager_helper.dart'; // Import Tray Helper
 
 class LogProvider extends ChangeNotifier {
   final Box box = Hive.box('logBox');
 
   final List<LogEntry> _logs = [];
-  // List<LogEntry> get logs => _logs; // Replaced by sorted getter below
 
   LogProvider() {
     _loadAll();
@@ -44,9 +44,14 @@ class LogProvider extends ChangeNotifier {
     
     // 排序设置
     _sortAscending = box.get('sortAscending', defaultValue: false);
+    _isManualSort =
+        box.get('isManualSort', defaultValue: false); // Load manual sort state
 
     // 加载分类
     _loadCategories();
+
+    // Sync Tray State initially
+    updateTrayMenu(_locked);
 
     notifyListeners();
   }
@@ -64,6 +69,7 @@ class LogProvider extends ChangeNotifier {
         category: category,
         color: color,
         backgroundColor: backgroundColor,
+        createdAt: DateTime.now(),
       ),
     );
     saveLogs();
@@ -205,22 +211,40 @@ class LogProvider extends ChangeNotifier {
     _windowHeight = box.get('windowHeight', defaultValue: 600.0);
   }
 
-  /// 日志拖动排序（ReorderableListView 使用）
+  /// 日志拖动排序
   void reorderLogs(int oldIndex, int newIndex) {
-    if (oldIndex < 0 || oldIndex >= _logs.length) return;
-    if (newIndex < 0 || newIndex > _logs.length) return;
+    if (oldIndex < 0 || oldIndex >= logs.length)
+      return; // check against visible list
 
-    // Flutter 官方推荐写法
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
+    // Important: The UI gives indices based on the VISIBLE list (getter logs).
+    // If _isManualSort is FALSE, logs are sorted by date.
+    // If user drags, we IMPLICITLY switch to Manual Sort.
+    if (!_isManualSort) {
+      _isManualSort = true;
+      box.put('isManualSort', true);
+      // NOTE: If we switch to manual sort, the current `_logs` might not match visual order.
+      // But reorder happens visually.
+      // Simplification: We apply the move to `_logs` directly.
+      // Ideally, we should first sort `_logs` to match the previous visual order, then apply the move.
+      // BUT, let's assume if they drag, they lose the "Sort By Date" and just get the current underlying order + the move.
+      // OR, we just re-sort `_logs` to match date before applying?
+      // Let's implement robust switch:
+      // If we were sorted by date, we should RE-ORDER `_logs` to match that date-sort FIRST, then apply the drag.
+      _logs.sort((a, b) {
+        final dateA = a.createdAt;
+        final dateB = b.createdAt;
+        return _sortAscending ? dateA.compareTo(dateB) : dateB.compareTo(dateA);
+      });
     }
+
+    // Bounds check
+    if (newIndex > _logs.length) newIndex = _logs.length;
+    if (newIndex > oldIndex) newIndex -= 1;
 
     final item = _logs.removeAt(oldIndex);
     _logs.insert(newIndex, item);
 
-    // 🔒 立刻持久化顺序
     saveLogs();
-
     notifyListeners();
   }
 
@@ -229,7 +253,6 @@ class LogProvider extends ChangeNotifier {
   List<CategoryModel> get categories => _categories;
 
   void _initCategories() {
-    // 默认分类
     if (_categories.isEmpty) {
       _categories = [
         CategoryModel(name: '默认', colorValue: Colors.grey.value),
@@ -248,17 +271,34 @@ class LogProvider extends ChangeNotifier {
     }
   }
 
+  void updateCategory(String oldName, String newName, int newColorValue) {
+    final index = _categories.indexWhere((c) => c.name == oldName);
+    if (index != -1) {
+      _categories[index] =
+          CategoryModel(name: newName, colorValue: newColorValue);
+      saveCategories();
+
+      bool logsChanged = false;
+      for (var i = 0; i < _logs.length; i++) {
+        if (_logs[i].category == oldName) {
+          _logs[i] = _logs[i].copyWith(category: newName);
+          logsChanged = true;
+        }
+      }
+      if (logsChanged) {
+        saveLogs();
+      }
+      notifyListeners();
+    }
+  }
+
   void removeCategory(String name, {bool deleteLogs = false}) {
-    // 移除分类
     _categories.removeWhere((c) => c.name == name);
     saveCategories();
 
-    // 处理日志
     if (deleteLogs) {
-      // 删除该分类下的所有日志
       _logs.removeWhere((log) => log.category == name);
     } else {
-      // 解散分类：将该分类下的日志重置为 '默认'
       for (var i = 0; i < _logs.length; i++) {
         if (_logs[i].category == name) {
           _logs[i] = _logs[i].copyWith(category: '默认');
@@ -280,11 +320,9 @@ class LogProvider extends ChangeNotifier {
           .map((e) => CategoryModel.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     } else {
-      // 尝试迁移旧分类 (List<String>)
       final oldCategories = box.get('categories');
       if (oldCategories != null && oldCategories is List) {
         _categories = oldCategories.map((name) {
-          // 简单映射颜色
           int color = Colors.grey.value;
           if (name.toString().contains('工作')) color = Colors.blue.value;
           if (name.toString().contains('生活')) color = Colors.green.value;
@@ -297,10 +335,17 @@ class LogProvider extends ChangeNotifier {
   }
 
   // ================= 排序 =================
-  bool _sortAscending = false; // 默认按创建时间倒序 (新的在上面)
+  bool _sortAscending = false; 
   bool get sortAscending => _sortAscending;
+  
+  bool _isManualSort = false;
+  bool get isManualSort => _isManualSort;
 
   void toggleSortOrder() {
+    // Toggling sort order re-enables Date sorting and disables Manual sort
+    _isManualSort = false;
+    box.put('isManualSort', false);
+    
     _sortAscending = !_sortAscending;
     box.put('sortAscending', _sortAscending);
     notifyListeners();
@@ -308,10 +353,12 @@ class LogProvider extends ChangeNotifier {
 
   @override
   List<LogEntry> get logs {
-    // 返回排序后的列表
+    if (_isManualSort) {
+      return List.unmodifiable(_logs);
+    }
+    // Else return sorted copy
     final sortedList = List<LogEntry>.from(_logs);
     sortedList.sort((a, b) {
-      // 比较创建时间。如果没有则用 ID 或其他兜底
       final dateA = a.createdAt;
       final dateB = b.createdAt;
       return _sortAscending ? dateA.compareTo(dateB) : dateB.compareTo(dateA);
@@ -326,6 +373,8 @@ class LogProvider extends ChangeNotifier {
   Future<void> setLocked(bool value) async {
     _locked = value;
     await windowManager.setIgnoreMouseEvents(_locked, forward: true);
+    // Update Tray
+    updateTrayMenu(_locked);
     notifyListeners();
   }
 
@@ -340,8 +389,6 @@ class LogProvider extends ChangeNotifier {
   Future<void> setTempUnlock(bool unlock) async {
     if (_tempUnlocked != unlock) {
       _tempUnlocked = unlock;
-      // 当处于“锁定”模式时，如果临时解锁（鼠标悬停），则允许鼠标事件
-      // 如果未临时解锁（鼠标移出），则恢复忽略鼠标事件
       if (_locked) {
         await windowManager.setIgnoreMouseEvents(!unlock);
       }
