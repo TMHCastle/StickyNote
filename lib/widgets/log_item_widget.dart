@@ -8,7 +8,7 @@ class LogItemWidget extends StatelessWidget {
   final LogEntry log;
   final double noteOpacity;
   final double fontSize;
-  final Function(LogEntry) onEdit; // Callback
+  final Function(LogEntry) onEdit;
 
   const LogItemWidget({
     super.key,
@@ -40,11 +40,19 @@ class LogItemWidget extends StatelessWidget {
         : Colors.white;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: const EdgeInsets.only(bottom: 6), // Increased spacing
+      padding: const EdgeInsets.symmetric(
+          horizontal: 10, vertical: 8), // More internal padding
       decoration: BoxDecoration(
         color: baseColor.withOpacity(baseColor.opacity * noteOpacity),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8), // Rounded
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2)),
+        ],
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -53,16 +61,26 @@ class LogItemWidget extends StatelessWidget {
           SizedBox(
             width: 24,
             height: 24,
-            child: Checkbox(
-              value: log.done,
-              onChanged: (val) {
-                final updatedLog = log.copyWith(done: val);
-                provider.updateLog(updatedLog);
-              },
-              side: const BorderSide(color: Colors.white60, width: 1.5),
+            child: Transform.scale(
+              scale: 0.9,
+              child: Checkbox(
+                value: log.done,
+                onChanged: (val) {
+                  final updatedLog = log.copyWith(done: val);
+                  provider.updateLog(updatedLog);
+                },
+                side: BorderSide(
+                    color: baseColor.computeLuminance() > 0.5
+                        ? Colors.black45
+                        : Colors.white60,
+                    width: 1.5),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4)),
+                activeColor: Colors.blueAccent,
+              ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
 
           // 2. Main Content & Tag
           Expanded(
@@ -72,32 +90,43 @@ class LogItemWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    log.title,
-                    style: TextStyle(
-                      decoration: log.done ? TextDecoration.lineThrough : null,
-                      color: log.color != null
-                          ? Color(log.color!)
-                          : Colors.black, // Default text
-                      fontSize: fontSize,
-                    ),
-                  ),
-                  if (categoryName != '默认')
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: tagBgColor,
-                          borderRadius: BorderRadius.circular(4),
+                  Row(
+                    children: [
+                      if (categoryName != '默认')
+                        Container(
+                          margin: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: tagBgColor,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            categoryName,
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: tagTextColor,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
+                      Expanded(
                         child: Text(
-                          categoryName,
-                          style: TextStyle(fontSize: 10, color: tagTextColor),
+                          log.title,
+                          style: TextStyle(
+                            decoration:
+                                log.done ? TextDecoration.lineThrough : null,
+                            color: log.color != null
+                                ? Color(log.color!)
+                                : (baseColor.computeLuminance() > 0.5
+                                    ? Colors.black87
+                                    : Colors.white),
+                            fontSize: fontSize,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -110,10 +139,9 @@ class LogItemWidget extends StatelessWidget {
             child: Icon(
               Icons.edit,
               size: 16, 
-              // Use adaptive color based on baseColor luminance
               color: baseColor.computeLuminance() > 0.5
-                  ? Colors.black54
-                  : Colors.white70,
+                  ? Colors.black38
+                  : Colors.white38,
             ),
           ),
         ],

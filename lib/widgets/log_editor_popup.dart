@@ -18,15 +18,14 @@ class LogEditorPopup extends StatefulWidget {
 
 class _LogEditorPopupState extends State<LogEditorPopup> {
   final TextEditingController _controller = TextEditingController();
-  final TextEditingController _categoryController = TextEditingController(); // For new category
+  final TextEditingController _categoryController = TextEditingController(); 
 
-  // State
   late String _title;
   late String _category;
   Color? _color;
   Color? _bgColor;
   
-  bool _showColorPickers = false;
+  // _showColorPickers removed, always shown or compact
 
   @override
   void initState() {
@@ -56,20 +55,21 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
   Widget build(BuildContext context) {
     final provider = context.watch<LogProvider>();
     final categories = provider.categories;
-    
-    // Adaptive text color based on popup background (blackish)
-    const textColor = Colors.white;
 
     return Container(
-      // Positioned logic will be handled by FloatingOverlay, here we just define the box
-      // or we can make this a Dialog-like box.
-      width: 300,
-      padding: const EdgeInsets.all(12),
+      width: 320,
+      constraints: const BoxConstraints(minHeight: 200), // Min Height requested
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.85), // Solid background for legibility
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white24),
-        boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 10, spreadRadius: 2)],
+        color: const Color(0xFF1E1E1E).withOpacity(0.95), // Premium Dark
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white12),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 20,
+              offset: const Offset(0, 8)),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -79,50 +79,62 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
            Row(
              children: [
                Text(widget.log == null ? AppStrings.get(context, 'addLog') : AppStrings.get(context, 'editLog'),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16)),
                const Spacer(),
                GestureDetector(
                  onTap: widget.onClose,
-                 child: const Icon(Icons.close, color: Colors.white54, size: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                      color: Colors.white10, shape: BoxShape.circle),
+                  padding: const EdgeInsets.all(4),
+                  child:
+                      const Icon(Icons.close, color: Colors.white70, size: 16),
+                ),
                )
              ],
            ),
-           const SizedBox(height: 12),
+          const SizedBox(height: 16),
            
            // Content Input
            TextField(
              controller: _controller,
-             style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white, fontSize: 14),
              decoration: InputDecoration(
                hintText: AppStrings.get(context, 'enterContent'),
                hintStyle: const TextStyle(color: Colors.white38),
                filled: true,
-               fillColor: Colors.white.withOpacity(0.05),
-               border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide.none),
+              fillColor: Colors.black26,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none),
                isDense: true,
-               contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              contentPadding: const EdgeInsets.all(12),
              ),
-             maxLines: 3,
-             minLines: 1,
+            maxLines: 4,
+            minLines: 2,
            ),
-           const SizedBox(height: 12),
+          const SizedBox(height: 16),
            
-           // Controls Row
+          // Category & Add Button
            Row(
-             children: [
-               // Category Dropdown
+            children: [
                Expanded(
                  child: Container(
-                   padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                    decoration: BoxDecoration(
-                     color: Colors.white.withOpacity(0.05),
-                     borderRadius: BorderRadius.circular(4),
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(8),
                    ),
                    child: DropdownButtonHideUnderline(
                      child: DropdownButton<String>(
                        value: categories.any((c) => c.name == _category) ? _category : categories.first.name,
-                       dropdownColor: Colors.grey[900],
-                       icon: const Icon(Icons.arrow_drop_down, color: Colors.white54),
+                      dropdownColor: const Color(0xFF2C2C2C),
+                      icon: const Icon(Icons.expand_more,
+                          color: Colors.white54, size: 20),
                        isDense: true,
                        style: const TextStyle(color: Colors.white, fontSize: 13),
                        onChanged: (val) {
@@ -132,7 +144,10 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
                            value: c.name,
                            child: Row(
                              children: [
-                               Container(width: 8, height: 8, margin: const EdgeInsets.only(right: 6),
+                                  Container(
+                                      width: 8,
+                                      height: 8,
+                                      margin: const EdgeInsets.only(right: 8),
                                          decoration: BoxDecoration(color: Color(c.colorValue), shape: BoxShape.circle)),
                                Text(c.name),
                              ],
@@ -142,105 +157,116 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
                    ),
                  ),
                ),
-               const SizedBox(width: 8),
-               
-               // Add Category Button
+              const SizedBox(width: 8),
                GestureDetector(
                  onTap: () => _showAddCategoryDialog(context, provider),
                  child: Container(
-                   width: 32, height: 32,
+                  width: 36,
+                  height: 36,
                    decoration: BoxDecoration(
-                     color: Colors.white.withOpacity(0.05),
-                     borderRadius: BorderRadius.circular(4),
+                    color: Colors.blueAccent.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
                    ),
-                   child: const Icon(Icons.add, color: Colors.white70, size: 18),
-                 ),
-               ),
-               
-               const SizedBox(width: 8),
-               // Colors Toggle
-               GestureDetector(
-                 onTap: () => setState(() => _showColorPickers = !_showColorPickers),
-                 child: Container(
-                   width: 32, height: 32,
-                   decoration: BoxDecoration(
-                     color: (_color != null || _bgColor != null) ? Colors.blueAccent.withOpacity(0.5) : Colors.white.withOpacity(0.05),
-                     borderRadius: BorderRadius.circular(4),
-                     border: (_color != null || _bgColor != null) ? Border.all(color: Colors.blueAccent) : null,
-                   ),
-                   child: const Icon(Icons.palette, color: Colors.white70, size: 16),
+                  child:
+                      const Icon(Icons.add, color: Colors.blueAccent, size: 20),
                  ),
                ),
              ],
            ),
+          const SizedBox(height: 16),
            
-           if (_showColorPickers) ...[
-             const SizedBox(height: 12),
-             Row(
-               children: [
-                 Text('Text: ', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                 GestureDetector(
-                    onTap: () => _showColorPicker(context, _color ?? Colors.white, (c) => setState(() => _color = c)),
-                    child: Container(
-                      width: 20, height: 20, 
-                      decoration: BoxDecoration(color: _color ?? Colors.white, border: Border.all(color: Colors.white30), shape: BoxShape.circle),
-                    ),
-                 ),
-                 const SizedBox(width: 16),
-                 Text('Bg: ', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                 GestureDetector(
-                    onTap: () => _showColorPicker(context, _bgColor ?? Colors.transparent, (c) => setState(() => _bgColor = c)),
-                    child: Container(
-                      width: 20, height: 20, 
-                      decoration: BoxDecoration(color: _bgColor ?? Colors.black, border: Border.all(color: Colors.white30), shape: BoxShape.circle),
-                    ),
-                 ),
-                 const Spacer(),
-                 // Clear colors
-                 GestureDetector(
-                   onTap: () => setState(() { _color = null; _bgColor = null; }),
-                   child: const Icon(Icons.format_clear, size: 16, color: Colors.white54),
+          // Colors (Always shown now)
+          Row(
+            children: [
+              _buildColorOption(
+                  'Text', _color, (c) => setState(() => _color = c)),
+              const SizedBox(width: 16),
+              _buildColorOption(
+                  'Bg', _bgColor, (c) => setState(() => _bgColor = c)),
+              const Spacer(),
+              if (_color != null || _bgColor != null)
+                TextButton.icon(
+                  onPressed: () => setState(() {
+                    _color = null;
+                    _bgColor = null;
+                  }),
+                  icon: const Icon(Icons.format_clear,
+                      size: 14, color: Colors.white54),
+                  label: const Text('Reset',
+                      style: TextStyle(fontSize: 12, color: Colors.white54)),
+                  style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                  )
-               ],
-             ),
-           ],
+            ],
+          ),
            
-           const SizedBox(height: 16),
+          const SizedBox(height: 20),
            
            // Actions
-           Row(
-             mainAxisAlignment: MainAxisAlignment.end,
-             children: [
-               TextButton(
-                 onPressed: widget.onClose, // Cancel
-                 child: Text(AppStrings.get(context, 'cancel'), style: TextStyle(color: Colors.white54)),
-               ),
-               ElevatedButton(
-                 onPressed: () {
-                   final text = _controller.text.trim();
-                   if (text.isEmpty) return;
-                   
-                   if (widget.log == null) {
-                     provider.addLog(text, category: _category, color: _color?.value, backgroundColor: _bgColor?.value);
-                   } else {
-                     final updated = widget.log!.copyWith(
-                        title: text,
-                        category: _category,
-                        color: _color?.value,
-                        backgroundColor: _bgColor?.value
-                     );
-                     provider.updateLog(updated);
-                   }
-                   widget.onClose();
-                 },
-                 style: ElevatedButton.styleFrom(
-                   backgroundColor: Colors.blueAccent,
-                   foregroundColor: Colors.white,
-                 ),
-                 child: Text(widget.log == null ? AppStrings.get(context, 'add') : AppStrings.get(context, 'edit')), // "Confirm" or "Edit"
-               ),
-             ],
-           )
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                final text = _controller.text.trim();
+                if (text.isEmpty) return;
+
+                if (widget.log == null) {
+                  provider.addLog(text,
+                      category: _category,
+                      color: _color?.value,
+                      backgroundColor: _bgColor?.value);
+                } else {
+                  final updated = widget.log!.copyWith(
+                      title: text,
+                      category: _category,
+                      color: _color?.value,
+                      backgroundColor: _bgColor?.value);
+                  provider.updateLog(updated);
+                }
+                widget.onClose();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+                elevation: 0,
+              ),
+              child: Text(
+                  widget.log == null
+                      ? AppStrings.get(context, 'add')
+                      : AppStrings.get(context, 'edit'),
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildColorOption(
+      String label, Color? color, ValueChanged<Color> onPick) {
+    return GestureDetector(
+      onTap: () => _showColorPicker(context, color ?? Colors.white, onPick),
+      child: Row(
+        children: [
+          Text('$label: ',
+              style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+                color: color ?? Colors.transparent,
+                border: Border.all(color: Colors.white30),
+                borderRadius: BorderRadius.circular(4)),
+            child: color == null
+                ? const Center(
+                    child: Icon(Icons.close, size: 12, color: Colors.white30))
+                : null,
+          ),
         ],
       ),
     );
@@ -285,11 +311,12 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
      showDialog(
        context: context,
        builder: (ctx) {
-         Color temp = current;
+          Color temp = current == Colors.transparent ? Colors.white : current;
          return AlertDialog(
            backgroundColor: Colors.grey[900],
            content: SingleChildScrollView(
-             child: ThreeBarColorPicker(color: current, onChanged: (c) => temp = c),
+              child:
+                  ThreeBarColorPicker(color: temp, onChanged: (c) => temp = c),
            ),
            actions: [
              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),

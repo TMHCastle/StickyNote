@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui'; // For BackdropFilter
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -22,8 +23,12 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
   MousePollingService? _pollingService;
   
   bool _showSettings = false; 
-  LogEntry? _editingLog; // If non-null (or special flag), show Editor.
+  LogEntry? _editingLog; 
   bool _showEditor = false;
+  
+  // Editor Position
+  double? _editorTop;
+  double? _editorBottom;
 
   @override
   void initState() {
@@ -74,6 +79,44 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
     _pollingService?.stop();
     super.dispose();
   }
+  
+  void _openEditor(LogEntry? log, {GlobalKey? sourceKey}) {
+    setState(() {
+      _editingLog = log;
+      _showEditor = true;
+      _showSettings = false;
+
+      // Calculate position
+      if (log != null && sourceKey != null) {
+        final RenderBox? box =
+            sourceKey.currentContext?.findRenderObject() as RenderBox?;
+        if (box != null) {
+          // Get local position in the overlay stack?
+          // The Overlay stack fills the screen (or window).
+          // localToGlobal gives absolute.
+          // We need relative to the Stack. Since Stack fills screen, global is fine.
+          final offset = box.localToGlobal(Offset.zero);
+          final size = box.size;
+
+          // Target position: Immediately below the note.
+          // We need to account for the window height to ensure it fits?
+          // For now, simpler: Set top to offset.dy + size.height
+          _editorTop = offset.dy + size.height;
+          _editorBottom = null;
+        }
+      } else {
+        // Add Mode: "Below the last note".
+        // Finding the last note position is hard dynamically.
+        // But we know the "Add" button is at the bottom.
+        // The user wants it "sticking to the last note".
+        // If we can't easily get the last note, putting it above the Add button
+        // or effectively at the bottom of the list is a good approximation.
+        // Let's position it at the bottom of the visible list area.
+        _editorTop = null;
+        _editorBottom = 60; // Just above the bottom bar area
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,23 +126,35 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // ===== Background =====
+          // ===== Background with Blur =====
           Positioned.fill(
             child: Listener(
               onPointerDown: (_) => windowManager.startDragging(),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(provider.borderRadius),
-                  image: provider.useBackgroundImage &&
-                          provider.backgroundImage != null
-                      ? DecorationImage(
-                          image: FileImage(File(provider.backgroundImage!)),
-                          fit: BoxFit.cover,
-                          opacity: provider.bgOpacity,
-                        )
-                      : null,
-                  color: Color(provider.layoutBackgroundColor)
-                      .withOpacity(provider.bgOpacity),
+              child: ClipRRect(
+                // Clip for blur
+                borderRadius: BorderRadius.circular(provider.borderRadius),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                      sigmaX: 10, sigmaY: 10), // Glassmorphism blur
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius:
+                          BorderRadius.circular(provider.borderRadius),
+                      border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                          width: 1), // Thin glassy border
+                      image: provider.useBackgroundImage &&
+                              provider.backgroundImage != null
+                          ? DecorationImage(
+                              image: FileImage(File(provider.backgroundImage!)),
+                              fit: BoxFit.cover,
+                              opacity: provider.bgOpacity,
+                            )
+                          : null,
+                      color: Color(provider.layoutBackgroundColor)
+                          .withOpacity(provider.bgOpacity),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -112,26 +167,48 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
             child: IgnorePointer(
               ignoring: provider.locked,
               child: ReorderableListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8), // More padding
                 buildDefaultDragHandles: false,
                 onReorder: provider.reorderLogs,
                 itemCount: provider.logs.length,
                 itemBuilder: (context, index) {
                   final log = provider.logs[index];
-                  return ReorderableDelayedDragStartListener(
-                    key: ValueKey(log.id),
-                    index: index,
-                    child: LogItemWidget(
-                      log: log,
-                      noteOpacity: provider.noteBgOpacity,
-                      fontSize: provider.fontSize,
-                      onEdit: (l) {
-                        setState(() {
-                          _editingLog = l;
-                          _showEditor = true;
-                          _showSettings = false; // Close settings if open
-                        });
-                      },
+                  final GlobalKey itemKey =
+                      GlobalKey(); // Unique key for position?
+                  // Creating GlobalKey in build is suboptimal (recreates every frame),
+                  // but we need a reference.
+                  // Better: pass the context from the callback.
+                  // Revised LogItemWidget to accept GlobalKey? No.
+                  // We'll use a wrapper.
+                  return Container(
+                    key: ValueKey(log.id), // Reorderable needs Key
+                    child: Builder(
+                      // Builder to get context
+                      builder: (ctx) => LogItemWidget(
+                        log: log,
+                        noteOpacity: provider.noteBgOpacity,
+                        fontSize: provider.fontSize,
+                        onEdit: (l) {
+                          // Use ctx to find render object
+                          final RenderBox? box =
+                              ctx.findRenderObject() as RenderBox?;
+                          // Pass box info? Or just calculate here.
+                          // Getting offset here is safe.
+                          if (box != null) {
+                            final offset = box.localToGlobal(Offset.zero);
+                            final size = box.size;
+                            setState(() {
+                              _editingLog = l;
+                              _showEditor = true;
+                              _showSettings = false;
+                              _editorTop =
+                                  offset.dy + size.height + 4; // + spacing
+                              _editorBottom = null;
+                            });
+                          }
+                        },
+                      ),
                     ),
                   );
                 },
@@ -139,33 +216,32 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
             ),
           ),
 
-          // ===== Add Log Button (Bottom) =====
+          // ===== Add Log Button (Bottom) (Styled) =====
           Positioned(
             bottom: 16,
             left: 0,
             right: 0,
             child: Center(
-              child: TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _editingLog = null; // Add mode
-                    _showEditor = true;
-                    _showSettings = false;
-                  });
-                },
-                icon: Icon(Icons.add,
-                    size: 16,
-                    color: Colors.white.withOpacity(provider.controlOpacity)),
-                label: Text(
-                  AppStrings.get(context, 'addLog'),
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(provider.controlOpacity)),
-                ),
-                style: TextButton.styleFrom(
-                  backgroundColor:
-                      Colors.white.withOpacity(0.2 * provider.controlOpacity),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: TextButton.icon(
+                    onPressed: () => _openEditor(null),
+                    icon: Icon(Icons.add_circle, // More prominent icon
+                        size: 18,
+                        color: Colors.white.withOpacity(0.9)),
+                    label: Text(
+                      AppStrings.get(context, 'addLog'),
+                      style: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.1),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                    ),
                   ),
                 ),
               ),
@@ -185,7 +261,7 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
                   Positioned(
                     top: 80,
                     right: 16,
-                    width: 300,
+                    width: 300, 
                     child: const SettingsPopup(),
                   ),
                 ],
@@ -200,15 +276,11 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
                   GestureDetector(
                     onTap: () => setState(() => _showEditor = false),
                     behavior: HitTestBehavior.opaque,
-                    child:
-                        Container(color: Colors.black12), // Dimmed background
+                    child: Container(color: Colors.black12),
                   ),
                   Positioned(
-                    // Dynamic position: Center or bottom aligned?
-                    // User said "adjust position based on existing tags bottom".
-                    // If we center it, it's safe.
-                    // Or we can put it at the bottom above the button.
-                    bottom: 70,
+                    top: _editorTop,
+                    bottom: _editorBottom,
                     left: 16,
                     right: 16,
                     child: LogEditorPopup(
@@ -220,7 +292,7 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
               ),
             ),
 
-          // ===== Top Left Lock Button =====
+          // ===== Top Left Lock Button (Glassy) =====
           Positioned(
             top: 16,
             left: 16,
@@ -235,18 +307,20 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
                       await provider.toggleLocked();
                     },
                     child: Container(
-                      width: 28,
-                      height: 28,
+                      width: 32, height: 32, // Slightly larger
                       decoration: BoxDecoration(
-                        color: Colors.black
-                            .withOpacity(0.6 * provider.controlOpacity),
+                        color: Colors.black.withOpacity(0.4),
                         shape: BoxShape.circle,
+                        border:
+                            Border.all(color: Colors.white.withOpacity(0.2)),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black26, blurRadius: 4)
+                        ],
                       ),
                       child: Icon(
                         provider.locked ? Icons.lock : Icons.lock_open,
                         size: 16,
-                        color:
-                            Colors.white.withOpacity(provider.controlOpacity),
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -254,26 +328,23 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
                   SizedBox(
                     width: 120,
                     child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 500),
-                      transitionBuilder: (child, animation) =>
-                          FadeTransition(opacity: animation, child: child),
-                      switchInCurve: Curves.easeIn,
-                      switchOutCurve: Curves.easeOut,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          provider.locked
-                              ? AppStrings.get(context, 'unlockInTray')
-                              : AppStrings.get(context, 'clickToLock'),
-                          key: ValueKey('fill-${provider.locked}'),
+                      duration: const Duration(milliseconds: 300),
+                      child: provider.locked
+                          ? const SizedBox()
+                          : Text(
+                              AppStrings.get(context, 'clickToLock'),
+                              key: const ValueKey('hint'),
                           style: TextStyle(
-                            fontSize: 16,
+                                fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white
-                                .withOpacity(provider.controlOpacity),
-                          ),
-                        ),
-                      ),
+                                color: Colors.white.withOpacity(0.8),
+                                shadows: [
+                                  Shadow(
+                                      color: Colors.black.withOpacity(0.5),
+                                      blurRadius: 2)
+                                ],
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -281,7 +352,7 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
             ),
           ),
           
-          // ===== Top Right Settings Button =====
+          // ===== Top Right Settings Button (Glassy) =====
           Positioned(
             top: 16,
             right: 16,
@@ -289,24 +360,22 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
               onTap: () {
                 setState(() {
                   _showSettings = !_showSettings;
-                  _showEditor = false; // Close editor if open
+                  _showEditor = false;
                 });
               },
               child: Container(
-                width: 28,
-                height: 28,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
-                  color:
-                      Colors.black.withOpacity(0.4 * provider.controlOpacity),
+                  color: Colors.black.withOpacity(0.4),
                   shape: BoxShape.circle,
-                  border: Border.all(
-                      color: Colors.white
-                          .withOpacity(0.2 * provider.controlOpacity)),
+                  border: Border.all(color: Colors.white.withOpacity(0.2)),
+                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.settings,
-                  size: 16,
-                  color: Colors.white.withOpacity(provider.controlOpacity),
+                  size: 18,
+                  color: Colors.white,
                 ),
               ),
             ),

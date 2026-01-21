@@ -31,7 +31,13 @@ class _SettingsPopupState extends State<SettingsPopup> {
       decoration: BoxDecoration(
         color: popupBgColor,
         border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12), // More rounded
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 15,
+              offset: const Offset(0, 5)),
+        ],
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -41,12 +47,12 @@ class _SettingsPopupState extends State<SettingsPopup> {
             // 1. Basic Settings
             _buildBasicSettings(context, provider, textColor),
 
-            const Divider(color: Colors.white24, height: 1),
+            const Divider(color: Colors.white12, height: 1),
 
             // 2. Tag Management
             _buildTagManagement(context, provider, textColor),
 
-            const Divider(color: Colors.white24, height: 1),
+            const Divider(color: Colors.white12, height: 1),
 
             // 3. Advanced Settings
             InkWell(
@@ -154,15 +160,91 @@ class _SettingsPopupState extends State<SettingsPopup> {
             onChanged: provider.setFontSize,
             textColor: textColor,
           ),
+          
+          const SizedBox(height: 12),
+          // === Moved to Basic: Background & Image ===
 
-          // Opacity controls
           _buildSlider(
-            label: AppStrings.get(context, 'noteOpacity'),
-            value: provider.noteBgOpacity,
+            label: AppStrings.get(context, 'bgOpacity'),
+            value: provider.bgOpacity,
             min: 0.0,
             max: 1.0,
-            onChanged: provider.setNoteBgOpacity,
+            onChanged: provider.setBgOpacity,
             textColor: textColor,
+          ),
+          
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(AppStrings.get(context, 'useBgImage'),
+                style: TextStyle(color: textColor, fontSize: 13)),
+            value: provider.useBackgroundImage,
+            onChanged: provider.setUseBackgroundImage,
+            activeColor: Colors.blueAccent,
+          ),
+
+          if (!provider.useBackgroundImage || provider.backgroundImage == null)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(AppStrings.get(context, 'bgColor'),
+                  style: TextStyle(color: textColor, fontSize: 13)),
+              trailing: GestureDetector(
+                onTap: () async {
+                  _showColorPickerDialog(
+                      context, Color(provider.layoutBackgroundColor), (c) {
+                    provider.setLayoutBackgroundColor(c.value);
+                  });
+                },
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Color(provider.layoutBackgroundColor),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(AppStrings.get(context, 'bgImage'),
+                style: TextStyle(color: textColor, fontSize: 13)),
+            subtitle: provider.backgroundImage != null
+                ? Text(
+                    provider.backgroundImage!
+                        .split(Platform.pathSeparator)
+                        .last,
+                    style: TextStyle(
+                        color: textColor.withOpacity(0.6), fontSize: 11),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : Text(AppStrings.get(context, 'noImageSet'),
+                    style: TextStyle(
+                        color: textColor.withOpacity(0.5), fontSize: 11)),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.upload_file, size: 20),
+                  color: textColor.withOpacity(0.8),
+                  onPressed: () async {
+                    final result = await FilePicker.platform
+                        .pickFiles(type: FileType.image);
+                    if (result != null && result.files.isNotEmpty) {
+                      provider.setBackgroundImage(result.files.single.path!);
+                    }
+                  },
+                ),
+                if (provider.backgroundImage != null)
+                  IconButton(
+                    icon: const Icon(Icons.delete, size: 20),
+                    color: textColor.withOpacity(0.8),
+                    onPressed: provider.removeBackgroundImage,
+                  ),
+              ],
+            ),
           ),
         ],
       ),
@@ -178,7 +260,7 @@ class _SettingsPopupState extends State<SettingsPopup> {
         children: [
           Row(
             children: [
-              Text(AppStrings.get(context, 'manageTags'),
+              Text(AppStrings.get(context, 'manageTags'), 
                   style: TextStyle(
                       color: textColor,
                       fontSize: 14,
@@ -253,6 +335,15 @@ class _SettingsPopupState extends State<SettingsPopup> {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Column(
         children: [
+          // === Moved here from Basic: Note Opacity & Control Opacity ===
+          _buildSlider(
+            label: AppStrings.get(context, 'noteOpacity'),
+            value: provider.noteBgOpacity,
+            min: 0.0,
+            max: 1.0,
+            onChanged: provider.setNoteBgOpacity,
+            textColor: textColor,
+          ),
           _buildSlider(
             label: AppStrings.get(context, 'controlOpacity'),
             value: provider.controlOpacity,
@@ -260,84 +351,6 @@ class _SettingsPopupState extends State<SettingsPopup> {
             max: 1.0,
             onChanged: provider.setControlOpacity,
             textColor: textColor,
-          ),
-          _buildSlider(
-            label: AppStrings.get(context, 'bgOpacity'),
-            value: provider.bgOpacity,
-            min: 0.0,
-            max: 1.0,
-            onChanged: provider.setBgOpacity,
-            textColor: textColor,
-          ),
-          
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-            title: Text(AppStrings.get(context, 'useBgImage'),
-                style: TextStyle(color: textColor, fontSize: 13)),
-              value: provider.useBackgroundImage,
-              onChanged: provider.setUseBackgroundImage,
-              activeColor: Colors.blueAccent,
-            ),
-            
-            if (!provider.useBackgroundImage || provider.backgroundImage == null)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-              title: Text(AppStrings.get(context, 'bgColor'),
-                  style: TextStyle(color: textColor, fontSize: 13)),
-              trailing: GestureDetector(
-                onTap: () async {
-                  _showColorPickerDialog(
-                      context, Color(provider.layoutBackgroundColor), (c) {
-                    provider.setLayoutBackgroundColor(c.value);
-                  });
-                },
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: Color(provider.layoutBackgroundColor),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white),
-                  ),
-                ),
-                ),
-              ),
-
-             ListTile(
-              contentPadding: EdgeInsets.zero,
-            title: Text(AppStrings.get(context, 'bgImage'),
-                style: TextStyle(color: textColor, fontSize: 13)),
-              subtitle: provider.backgroundImage != null
-                  ? Text(
-                      provider.backgroundImage!.split(Platform.pathSeparator).last,
-                      style: TextStyle(color: textColor.withOpacity(0.6), fontSize: 11),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                : Text(AppStrings.get(context, 'noImageSet'),
-                    style: TextStyle(
-                        color: textColor.withOpacity(0.5), fontSize: 11)),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.upload_file, size: 20),
-                    color: textColor.withOpacity(0.8),
-                    onPressed: () async {
-                      final result = await FilePicker.platform.pickFiles(type: FileType.image);
-                      if (result != null && result.files.isNotEmpty) {
-                        provider.setBackgroundImage(result.files.single.path!);
-                      }
-                    },
-                  ),
-                  if (provider.backgroundImage != null)
-                      IconButton(
-                      icon: const Icon(Icons.delete, size: 20),
-                      color: textColor.withOpacity(0.8),
-                      onPressed: provider.removeBackgroundImage,
-                    ),
-                ],
-              ),
           ),
           ],
         ),
@@ -458,12 +471,8 @@ class _SettingsPopupState extends State<SettingsPopup> {
                   if (isNew) {
                     provider.addCategory(nameCtrl.text.trim(), color.value);
                   } else {
-                    // For MVP: Remove old, Add new (migrating logs manually if needed)
-                    // This logic is complex safely. Let's just Add for now.
-                    // Or inform user.
                     provider.removeCategory(category.name, deleteLogs: false);
                     provider.addCategory(nameCtrl.text.trim(), color.value);
-                    // Note: Logs with old category will be 'Default', this is a compromise for now.
                   }
                 }
                 Navigator.pop(ctx);
