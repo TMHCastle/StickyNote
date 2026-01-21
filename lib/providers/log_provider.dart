@@ -37,6 +37,9 @@ class LogProvider extends ChangeNotifier {
     _borderRadius = box.get('borderRadius', defaultValue: 12.0);
     _noteBgOpacity = box.get('noteBgOpacity', defaultValue: 0.5);
     _noteBgColor = box.get('noteBgColor', defaultValue: Colors.black.value);
+    
+    // 语言设置
+    _locale = box.get('locale', defaultValue: 'zh');
 
     notifyListeners();
   }
@@ -236,5 +239,16 @@ class LogProvider extends ChangeNotifier {
 
   Future<void> toggleLocked() async {
     await setLocked(!_locked);
+  }
+
+  // ================= 语言设置 =================
+  String _locale = 'zh';
+  String get locale => _locale;
+  void setLocale(String v) {
+    if (_locale != v) {
+      _locale = v;
+      box.put('locale', v);
+      notifyListeners();
+    }
   }
 }

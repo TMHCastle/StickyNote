@@ -19,13 +19,14 @@ class LogItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.read<LogProvider>();
 
+    final baseColor = log.backgroundColor != null
+        ? Color(log.backgroundColor!)
+        : Colors.white;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
-        color: (log.backgroundColor != null
-                ? Color(log.backgroundColor!)
-                : Colors.white)
-            .withOpacity(noteOpacity),
+        color: baseColor.withOpacity(baseColor.opacity * noteOpacity),
         borderRadius: BorderRadius.circular(4),
       ),
       child: CheckboxListTile(

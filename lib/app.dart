@@ -10,7 +10,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(useMaterial3: true),
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        fontFamily: 'SourceHanSans',
+        useMaterial3: true,
+      ),
       initialRoute: '/',
       routes: {
         '/': (_) => const FloatingOverlay(),

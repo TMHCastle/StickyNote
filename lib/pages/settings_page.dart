@@ -7,6 +7,7 @@ import 'package:window_manager/window_manager.dart';
 import '../providers/log_provider.dart';
 import '../widgets/unified_background.dart';
 import '../widgets/stroked_text.dart';
+import '../utils/app_strings.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -30,13 +31,13 @@ class SettingsPage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: StrokedText(
-            '设置',
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            fillColor: textColor,
-            backgroundColor: backgroundColor,
-            backgroundOpacity: backgroundOpacity,
+          title: Text(
+            AppStrings.of(context, 'settings'),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: textColor,
+            ),
           ),
           backgroundColor: Colors.black.withOpacity(0.4),
           elevation: 0,
@@ -50,14 +51,14 @@ class SettingsPage extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 _sectionTitle(
-                  '界面外观',
+                  AppStrings.of(context, 'appearance'),
                   textColor,
                   backgroundColor,
                   backgroundOpacity,
                 ),
                 const SizedBox(height: 16),
                 _buildSlider(
-                  label: '控制栏 / 按钮透明度',
+                  label: AppStrings.of(context, 'controlOpacity'),
                   value: provider.controlOpacity,
                   min: 0.1,
                   max: 1.0,
@@ -67,7 +68,7 @@ class SettingsPage extends StatelessWidget {
                   backgroundOpacity: backgroundOpacity,
                 ),
                 _buildSlider(
-                  label: '背景透明度',
+                  label: AppStrings.of(context, 'bgOpacity'),
                   value: provider.bgOpacity,
                   min: 0.0,
                   max: 1.0,
@@ -77,7 +78,8 @@ class SettingsPage extends StatelessWidget {
                   backgroundOpacity: backgroundOpacity,
                 ),
                 _buildSlider(
-                  label: '便签字体大小 (${provider.fontSize.toInt()})',
+                  label:
+                      '${AppStrings.of(context, 'noteFontSize')} (${provider.fontSize.toInt()})',
                   value: provider.fontSize,
                   min: 10,
                   max: 30,
@@ -87,7 +89,7 @@ class SettingsPage extends StatelessWidget {
                   backgroundOpacity: backgroundOpacity,
                 ),
                 _buildSlider(
-                  label: '便签透明度',
+                  label: AppStrings.of(context, 'noteOpacity'),
                   value: provider.noteBgOpacity,
                   min: 0.0,
                   max: 1.0,
@@ -98,7 +100,7 @@ class SettingsPage extends StatelessWidget {
                 ),
                 const Divider(height: 32, color: Colors.white24),
                 _sectionTitle(
-                  '全局背景',
+                  AppStrings.of(context, 'globalBackground'),
                   textColor,
                   backgroundColor,
                   backgroundOpacity,
@@ -106,7 +108,7 @@ class SettingsPage extends StatelessWidget {
                 const SizedBox(height: 16),
                 SwitchListTile(
                   title: StrokedText(
-                    '使用背景图片',
+                    AppStrings.of(context, 'useBgImage'),
                     fillColor: textColor,
                     backgroundColor: backgroundColor,
                     backgroundOpacity: backgroundOpacity,
@@ -119,7 +121,7 @@ class SettingsPage extends StatelessWidget {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: StrokedText(
-                      '背景颜色',
+                      AppStrings.of(context, 'bgColor'),
                       fillColor: textColor,
                       backgroundColor: backgroundColor,
                       backgroundOpacity: backgroundOpacity,
@@ -134,7 +136,7 @@ class SettingsPage extends StatelessWidget {
                         final Color newColor = await showColorPickerDialog(
                           context,
                           backgroundColor,
-                          title: const Text('选择背景颜色'),
+                          title: Text(AppStrings.of(context, 'pickBgColor')),
                           enableOpacity: false,
                         );
                         provider.setLayoutBackgroundColor(newColor.value);
@@ -144,7 +146,7 @@ class SettingsPage extends StatelessWidget {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   title: StrokedText(
-                    '背景图片',
+                    AppStrings.of(context, 'bgImage'),
                     fillColor: textColor,
                     backgroundColor: backgroundColor,
                     backgroundOpacity: backgroundOpacity,
@@ -157,7 +159,7 @@ class SettingsPage extends StatelessWidget {
                           ),
                         )
                       : Text(
-                          '未设置图片',
+                          AppStrings.of(context, 'noImageSet'),
                           style: TextStyle(
                             color: textColor.withOpacity(0.5),
                           ),
@@ -184,6 +186,35 @@ class SettingsPage extends StatelessWidget {
                     ],
                   ),
                 ),
+                const Divider(height: 32, color: Colors.white24),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: StrokedText(
+                    AppStrings.of(context, 'language'),
+                    fillColor: textColor,
+                    backgroundColor: backgroundColor,
+                    backgroundOpacity: backgroundOpacity,
+                  ),
+                  trailing: DropdownButton<String>(
+                    dropdownColor: Colors.black.withOpacity(0.8),
+                    value: provider.locale,
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'zh',
+                          child: Text('中文',
+                              style: TextStyle(color: Colors.white))),
+                      DropdownMenuItem(
+                          value: 'en',
+                          child: Text('English',
+                              style: TextStyle(color: Colors.white))),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) provider.setLocale(v);
+                    },
+                    underline: Container(),
+                    iconEnabledColor: textColor,
+                  ),
+                ),
               ],
             ),
           ],
@@ -202,7 +233,7 @@ class SettingsPage extends StatelessWidget {
     return StrokedText(
       text,
       fontSize: 16,
-      fontWeight: FontWeight.bold,
+      fontWeight: FontWeight.w500,
       fillColor: textColor,
       backgroundColor: backgroundColor,
       backgroundOpacity: backgroundOpacity,

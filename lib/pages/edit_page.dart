@@ -5,6 +5,7 @@ import 'package:window_manager/window_manager.dart';
 import '../providers/log_provider.dart';
 import '../models/log_entry.dart';
 import '../widgets/unified_background.dart';
+import '../utils/app_strings.dart';
 
 class EditPage extends StatefulWidget {
   const EditPage({super.key});
@@ -44,7 +45,16 @@ class _EditPageState extends State<EditPage> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: Text(editingId == null ? '新增日志' : '修改日志'),
+          title: Text(
+            editingId == null
+                ? AppStrings.of(context, 'addLog')
+                : AppStrings.of(context, 'editLog'),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
+          ),
           backgroundColor: Colors.black.withOpacity(0.4),
           elevation: 0,
         ),
@@ -75,14 +85,16 @@ class _EditPageState extends State<EditPage> {
                               controller: _controller,
                               style: const TextStyle(color: Colors.white),
                               decoration: InputDecoration(
-                                hintText: '输入便签内容',
+                                hintText:
+                                    AppStrings.of(context, 'enterContent'),
                                 hintStyle:
                                     const TextStyle(color: Colors.white54),
                                 border: InputBorder.none,
                                 suffixIcon: editingId != null
                                     ? IconButton(
                                         icon: const Icon(Icons.close),
-                                        tooltip: '取消编辑',
+                                        tooltip: AppStrings.of(
+                                            context, 'cancelEdit'),
                                         onPressed: _resetForm,
                                       )
                                     : null,
@@ -133,7 +145,7 @@ class _EditPageState extends State<EditPage> {
                               size: 18,
                               color: Colors.white70,
                             ),
-                            tooltip: '新增分类',
+                            tooltip: AppStrings.of(context, 'addCategory'),
                             onPressed: () =>
                                 _showAddCategoryDialog(context, provider),
                           ),
@@ -147,7 +159,8 @@ class _EditPageState extends State<EditPage> {
                               final c = await showColorPickerDialog(
                                 context,
                                 selectedColor ?? Colors.white,
-                                title: const Text('文字颜色'),
+                                title:
+                                    Text(AppStrings.of(context, 'textColor')),
                                 enableOpacity: false,
                               );
                               setState(() => selectedColor = c);
@@ -162,7 +175,7 @@ class _EditPageState extends State<EditPage> {
                               final c = await showColorPickerDialog(
                                 context,
                                 selectedBgColor ?? Colors.transparent,
-                                title: const Text('背景颜色'),
+                                title: Text(AppStrings.of(context, 'bgColor')),
                                 enableOpacity: true,
                               );
                               setState(() => selectedBgColor = c);
@@ -174,7 +187,7 @@ class _EditPageState extends State<EditPage> {
                   ),
                 ),
 
-// ===== 日志列表（可拖动）=====
+                // ===== 日志列表（可拖动）=====
                 Expanded(
                   child: ReorderableListView.builder(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -211,7 +224,7 @@ class _EditPageState extends State<EditPage> {
                             IconButton(
                               icon: const Icon(Icons.delete_outline),
                               color: Colors.redAccent.withOpacity(0.8),
-                              tooltip: '删除',
+                              tooltip: AppStrings.get(context, 'delete'),
                               onPressed: () {
                                 context.read<LogProvider>().removeLog(log.id);
 
@@ -294,12 +307,12 @@ class _EditPageState extends State<EditPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('添加分类'),
+        title: Text(AppStrings.of(context, 'addCategory')),
         content: TextField(controller: _categoryController),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
+            child: Text(AppStrings.of(context, 'cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -311,7 +324,7 @@ class _EditPageState extends State<EditPage> {
               _categoryController.clear();
               Navigator.pop(ctx);
             },
-            child: const Text('添加'),
+            child: Text(AppStrings.of(context, 'add')),
           ),
         ],
       ),

@@ -28,3 +28,12 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon_16x16.ico
+    - assets/otf/
+
+  fonts:
+    - family: SourceHanSans
+      fonts:
+        - asset: assets/otf/SourceHanSansSC-Normal-2.otf
+          weight: 400
+        - asset: assets/otf/SourceHanSansSC-Medium-2.otf
+          weight: 500

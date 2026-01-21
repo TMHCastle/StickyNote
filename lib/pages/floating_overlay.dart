@@ -8,6 +8,7 @@ import 'package:window_manager/window_manager.dart';
 import '../providers/log_provider.dart';
 import '../widgets/log_item_widget.dart';
 import '../listener/tray_manager_helper.dart';
+import '../utils/app_strings.dart';
 
 class FloatingOverlay extends StatelessWidget {
   const FloatingOverlay({super.key});
@@ -84,7 +85,7 @@ class FloatingOverlay extends StatelessWidget {
                     size: 16,
                     color: Colors.white.withOpacity(provider.controlOpacity)),
                 label: Text(
-                  '编辑',
+                  AppStrings.of(context, 'edit'),
                   style: TextStyle(
                       color: Colors.white.withOpacity(provider.controlOpacity)),
                 ),
@@ -144,26 +145,32 @@ class FloatingOverlay extends StatelessWidget {
                               children: [
                                 // 描边层
                                 Text(
-                                  locked ? '请在托盘解锁' : '点击锁定',
+                                  locked
+                                      ? AppStrings.of(context, 'unlockInTray')
+                                      : AppStrings.of(context, 'clickToLock'),
                                   key: ValueKey(
                                       'stroke-$locked'), // 避免与填充层 key 冲突
                                   style: TextStyle(
                                     fontSize: 16,
-                                    fontWeight: FontWeight.w400,
+                                    fontWeight: FontWeight.w500,
                                     foreground: Paint()
                                       ..style = PaintingStyle.stroke
                                       ..strokeWidth = 2
-                                      ..color = Colors.black, // 描边颜色，可改
+                                      ..color = Colors.black.withOpacity(
+                                          provider.controlOpacity), // 描边颜色，可改
                                   ),
                                 ),
                                 // 填充层
                                 Text(
-                                  locked ? '请在托盘解锁' : '点击锁定',
+                                  locked
+                                      ? AppStrings.of(context, 'unlockInTray')
+                                      : AppStrings.of(context, 'clickToLock'),
                                   key: ValueKey('fill-$locked'),
                                   style: TextStyle(
                                     fontSize: 16,
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white
+                                        .withOpacity(provider.controlOpacity),
                                   ),
                                 ),
                               ],
