@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -40,7 +41,13 @@ class LogProvider extends ChangeNotifier {
     _noteBgColor = box.get('noteBgColor', defaultValue: Colors.black.value);
     
     // 语言设置
-    _locale = box.get('locale', defaultValue: 'zh');
+    if (box.containsKey('locale')) {
+      _locale = box.get('locale');
+    } else {
+      // 首次运行，尝试读取安装程序的语言设置 (Registry)
+      _locale = _detectInstallLocale();
+      box.put('locale', _locale);
+    }
     
     // 排序设置
     _sortAscending = box.get('sortAscending', defaultValue: false);
@@ -405,5 +412,29 @@ class LogProvider extends ChangeNotifier {
       box.put('locale', v);
       notifyListeners();
     }
+  }
+
+  String _detectInstallLocale() {
+    if (Platform.isWindows) {
+      try {
+        // Query Registry: HKCU\Software\SuspensionNote -> InstallLanguage
+        final result = Process.runSync('reg', [
+          'query',
+          'HKCU\\Software\\SuspensionNote',
+          '/v',
+          'InstallLanguage'
+        ]);
+        final output = result.stdout.toString().toLowerCase();
+
+        if (output.contains('english')) {
+          return 'en';
+        } else if (output.contains('chinesesimp')) {
+          return 'zh';
+        }
+      } catch (e) {
+        debugPrint('Failed to read registry: $e');
+      }
+    }
+    return 'zh'; // Default to Chinese if detection fails
   }
 }
