@@ -15,6 +15,7 @@
         "hive",
         "hive_flutter",
         "provider",
+        "screen_retriever",
         "system_tray",
         "tray_manager",
         "uuid",
@@ -40,6 +41,13 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "screen_retriever",
+      "version": "0.1.9",
+      "dependencies": [
+        "flutter"
       ]
     },
     {
@@ -373,13 +381,6 @@
         "flutter",
         "meta",
         "plugin_platform_interface"
-      ]
-    },
-    {
-      "name": "screen_retriever",
-      "version": "0.1.9",
-      "dependencies": [
-        "flutter"
       ]
     },
     {

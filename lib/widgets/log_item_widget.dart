@@ -1,23 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/log_entry.dart';
+import '../models/category_model.dart';
 import '../providers/log_provider.dart';
 
 class LogItemWidget extends StatelessWidget {
   final LogEntry log;
-  final double noteOpacity; // 每条便签透明度
-  final double fontSize; // 字体大小
+  final double noteOpacity;
+  final double fontSize;
+  final Function(LogEntry) onEdit; // Callback
 
   const LogItemWidget({
     super.key,
     required this.log,
     this.noteOpacity = 1.0,
     this.fontSize = 14.0,
+    required this.onEdit,
   });
 
   @override
   Widget build(BuildContext context) {
     final provider = context.read<LogProvider>();
+    
+    // Find CategoryModel
+    final categoryName = log.category;
+    final categoryModel = provider.categories.firstWhere(
+      (c) => c.name == categoryName,
+      orElse: () =>
+          CategoryModel(name: categoryName, colorValue: Colors.grey.value),
+    );
+
+    // Compute text color
+    final tagBgColor = Color(categoryModel.colorValue);
+    final tagTextColor =
+        tagBgColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
 
     final baseColor = log.backgroundColor != null
         ? Color(log.backgroundColor!)
@@ -25,41 +41,82 @@ class LogItemWidget extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: baseColor.withOpacity(baseColor.opacity * noteOpacity),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: CheckboxListTile(
-        controlAffinity: ListTileControlAffinity.leading,
-        value: log.done,
-        onChanged: (val) {
-          // 生成一个新的 LogEntry，修改 done 状态
-          final updatedLog = LogEntry(
-            id: log.id,
-            title: log.title,
-            done: val ?? false,
-            category: log.category,
-            color: log.color,
-            backgroundColor: log.backgroundColor,
-          );
-          provider.updateLog(updatedLog);
-        },
-        title: Text(
-          log.title,
-          style: TextStyle(
-            decoration: log.done ? TextDecoration.lineThrough : null,
-            color: log.color != null ? Color(log.color!) : Colors.black,
-            fontSize: fontSize,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 1. Confirm Checkbox
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: Checkbox(
+              value: log.done,
+              onChanged: (val) {
+                final updatedLog = log.copyWith(done: val);
+                provider.updateLog(updatedLog);
+              },
+              side: const BorderSide(color: Colors.white60, width: 1.5),
+            ),
           ),
-        ),
-        secondary: log.category != '默认'
-            ? Chip(
-                label: Text(
-                  log.category,
-                  style: const TextStyle(fontSize: 10),
-                ),
-              )
-            : null,
+          const SizedBox(width: 8),
+
+          // 2. Main Content & Tag
+          Expanded(
+            child: GestureDetector(
+              onTap: () => onEdit(log),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    log.title,
+                    style: TextStyle(
+                      decoration: log.done ? TextDecoration.lineThrough : null,
+                      color: log.color != null
+                          ? Color(log.color!)
+                          : Colors.black, // Default text
+                      fontSize: fontSize,
+                    ),
+                  ),
+                  if (categoryName != '默认')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: tagBgColor,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          categoryName,
+                          style: TextStyle(fontSize: 10, color: tagTextColor),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // 3. Edit Button
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => onEdit(log),
+            child: Icon(
+              Icons.edit,
+              size: 16, 
+              // Use adaptive color based on baseColor luminance
+              color: baseColor.computeLuminance() > 0.5
+                  ? Colors.black54
+                  : Colors.white70,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -10,8 +10,8 @@ class AppStrings {
       'en': 'Click to Lock',
     },
     'unlockInTray': {
-      'zh': '请在托盘解锁',
-      'en': 'Unlock in Tray',
+      'zh': '点击解锁',
+      'en': 'Click to Unlock',
     },
     'edit': {
       'zh': '编辑',
@@ -65,6 +65,22 @@ class AppStrings {
       'zh': '设置',
       'en': 'Settings',
     },
+    'basicSettings': {
+      'zh': '基础设置',
+      'en': 'Basic Settings',
+    },
+    'advancedSettings': {
+      'zh': '高级设置',
+      'en': 'Advanced Settings',
+    },
+    'resetDefaults': {
+      'zh': '恢复默认',
+      'en': 'Reset Defaults',
+    },
+    'resetConfirm': {
+      'zh': '确定恢复默认设置吗？',
+      'en': 'Reset all settings to default?',
+    },
     'appearance': {
       'zh': '界面外观',
       'en': 'Appearance',
@@ -108,6 +124,34 @@ class AppStrings {
     'language': {
       'zh': '语言 / Language',
       'en': 'Language / 语言',
+    },
+    'manageTags': {
+      'zh': '标签/分类管理',
+      'en': 'Manage Tags',
+    },
+    'tagName': {
+      'zh': '名称',
+      'en': 'Name',
+    },
+    'tagColor': {
+      'zh': '颜色',
+      'en': 'Color',
+    },
+    'deleteTagTitle': {
+      'zh': '删除标签',
+      'en': 'Delete Tag',
+    },
+    'deleteTagConfirm': {
+      'zh': '如何处理该标签下的便签？',
+      'en': 'How to handle logs in this tag?',
+    },
+    'deleteAction': {
+      'zh': '彻底删除 (包括便签)',
+      'en': 'Deep Delete (Incl. Logs)',
+    },
+    'dissolveAction': {
+      'zh': '仅解散 (便签归入默认)',
+      'en': 'Dissolve (Logs to Default)',
     },
   };
 

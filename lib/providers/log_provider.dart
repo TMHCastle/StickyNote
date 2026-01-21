@@ -3,12 +3,13 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:window_manager/window_manager.dart';
 import '../models/log_entry.dart';
+import '../models/category_model.dart';
 
 class LogProvider extends ChangeNotifier {
   final Box box = Hive.box('logBox');
 
   final List<LogEntry> _logs = [];
-  List<LogEntry> get logs => _logs;
+  // List<LogEntry> get logs => _logs; // Replaced by sorted getter below
 
   LogProvider() {
     _loadAll();
@@ -40,6 +41,12 @@ class LogProvider extends ChangeNotifier {
     
     // 语言设置
     _locale = box.get('locale', defaultValue: 'zh');
+    
+    // 排序设置
+    _sortAscending = box.get('sortAscending', defaultValue: false);
+
+    // 加载分类
+    _loadCategories();
 
     notifyListeners();
   }
@@ -218,13 +225,98 @@ class LogProvider extends ChangeNotifier {
   }
 
   // ================= 分类 =================
-  final List<String> _categories = ['默认', '工作', '生活', '重要'];
-  List<String> get categories => _categories;
-  void addCategory(String category) {
-    if (!_categories.contains(category)) {
-      _categories.add(category);
+  List<CategoryModel> _categories = [];
+  List<CategoryModel> get categories => _categories;
+
+  void _initCategories() {
+    // 默认分类
+    if (_categories.isEmpty) {
+      _categories = [
+        CategoryModel(name: '默认', colorValue: Colors.grey.value),
+        CategoryModel(name: '工作', colorValue: Colors.blue.value),
+        CategoryModel(name: '生活', colorValue: Colors.green.value),
+        CategoryModel(name: '重要', colorValue: Colors.red.value),
+      ];
+    }
+  }
+
+  void addCategory(String name, int colorValue) {
+    if (!_categories.any((c) => c.name == name)) {
+      _categories.add(CategoryModel(name: name, colorValue: colorValue));
+      saveCategories();
       notifyListeners();
     }
+  }
+
+  void removeCategory(String name, {bool deleteLogs = false}) {
+    // 移除分类
+    _categories.removeWhere((c) => c.name == name);
+    saveCategories();
+
+    // 处理日志
+    if (deleteLogs) {
+      // 删除该分类下的所有日志
+      _logs.removeWhere((log) => log.category == name);
+    } else {
+      // 解散分类：将该分类下的日志重置为 '默认'
+      for (var i = 0; i < _logs.length; i++) {
+        if (_logs[i].category == name) {
+          _logs[i] = _logs[i].copyWith(category: '默认');
+        }
+      }
+    }
+    saveLogs();
+    notifyListeners();
+  }
+
+  void saveCategories() {
+    box.put('categories_v2', _categories.map((e) => e.toJson()).toList());
+  }
+
+  void _loadCategories() {
+    final stored = box.get('categories_v2');
+    if (stored != null) {
+      _categories = (stored as List)
+          .map((e) => CategoryModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } else {
+      // 尝试迁移旧分类 (List<String>)
+      final oldCategories = box.get('categories');
+      if (oldCategories != null && oldCategories is List) {
+        _categories = oldCategories.map((name) {
+          // 简单映射颜色
+          int color = Colors.grey.value;
+          if (name.toString().contains('工作')) color = Colors.blue.value;
+          if (name.toString().contains('生活')) color = Colors.green.value;
+          if (name.toString().contains('重要')) color = Colors.red.value;
+          return CategoryModel(name: name.toString(), colorValue: color);
+        }).toList();
+      }
+    }
+    _initCategories();
+  }
+
+  // ================= 排序 =================
+  bool _sortAscending = false; // 默认按创建时间倒序 (新的在上面)
+  bool get sortAscending => _sortAscending;
+
+  void toggleSortOrder() {
+    _sortAscending = !_sortAscending;
+    box.put('sortAscending', _sortAscending);
+    notifyListeners();
+  }
+
+  @override
+  List<LogEntry> get logs {
+    // 返回排序后的列表
+    final sortedList = List<LogEntry>.from(_logs);
+    sortedList.sort((a, b) {
+      // 比较创建时间。如果没有则用 ID 或其他兜底
+      final dateA = a.createdAt;
+      final dateB = b.createdAt;
+      return _sortAscending ? dateA.compareTo(dateB) : dateB.compareTo(dateA);
+    });
+    return sortedList;
   }
 
   // ================= 锁定状态 =================
@@ -239,6 +331,22 @@ class LogProvider extends ChangeNotifier {
 
   Future<void> toggleLocked() async {
     await setLocked(!_locked);
+  }
+
+  // ================= 智能穿透 =================
+  bool _tempUnlocked = false;
+  bool get tempUnlocked => _tempUnlocked;
+
+  Future<void> setTempUnlock(bool unlock) async {
+    if (_tempUnlocked != unlock) {
+      _tempUnlocked = unlock;
+      // 当处于“锁定”模式时，如果临时解锁（鼠标悬停），则允许鼠标事件
+      // 如果未临时解锁（鼠标移出），则恢复忽略鼠标事件
+      if (_locked) {
+        await windowManager.setIgnoreMouseEvents(!unlock);
+      }
+      notifyListeners();
+    }
   }
 
   // ================= 语言设置 =================

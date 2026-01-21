@@ -1,11 +1,12 @@
-import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
-import '../providers/log_provider.dart';
+import '../models/category_model.dart';
 import '../models/log_entry.dart';
-import '../widgets/unified_background.dart';
+import '../providers/log_provider.dart';
 import '../utils/app_strings.dart';
+import '../widgets/unified_background.dart';
+import '../widgets/three_bar_color_picker.dart';
 
 class EditPage extends StatefulWidget {
   const EditPage({super.key});
@@ -37,7 +38,6 @@ class _EditPageState extends State<EditPage> {
 
     return GestureDetector(
       onPanStart: (_) async {
-        // 仅在非透明区域触发拖动
         if (!await windowManager.isMaximized()) {
           windowManager.startDragging();
         }
@@ -60,15 +60,11 @@ class _EditPageState extends State<EditPage> {
         ),
         body: Stack(
           children: [
-            // ===== 统一背景（与 FloatingOverlay 完全一致）=====
             const Positioned.fill(
               child: UnifiedBackground(),
             ),
-
-            // ===== 实际内容 =====
             Column(
               children: [
-                // ===== 输入区 =====
                 Container(
                   margin: const EdgeInsets.all(8),
                   padding: const EdgeInsets.all(8),
@@ -111,21 +107,20 @@ class _EditPageState extends State<EditPage> {
                         ],
                       ),
                       const Divider(color: Colors.white24),
-
-                      // ===== 分类 + 颜色 =====
                       Row(
                         children: [
                           DropdownButton<String>(
                             dropdownColor: Colors.black.withOpacity(0.8),
-                            value: categories.contains(selectedCategory)
+                            value: categories
+                                    .any((c) => c.name == selectedCategory)
                                 ? selectedCategory
-                                : categories.first,
+                                : categories.first.name,
                             items: categories
                                 .map(
                                   (c) => DropdownMenuItem(
-                                    value: c,
+                                    value: c.name,
                                     child: Text(
-                                      c,
+                                      c.name,
                                       style:
                                           const TextStyle(color: Colors.white),
                                     ),
@@ -150,35 +145,30 @@ class _EditPageState extends State<EditPage> {
                                 _showAddCategoryDialog(context, provider),
                           ),
                           const Spacer(),
-
-                          // 文字颜色
                           _ColorDot(
                             label: 'T',
                             color: selectedColor ?? Colors.white,
                             onTap: () async {
-                              final c = await showColorPickerDialog(
+                              final c = await _showColorPicker(
                                 context,
                                 selectedColor ?? Colors.white,
-                                title:
-                                    Text(AppStrings.of(context, 'textColor')),
-                                enableOpacity: false,
                               );
-                              setState(() => selectedColor = c);
+                              if (c != null) {
+                                setState(() => selectedColor = c);
+                              }
                             },
                           ),
-
-                          // 背景颜色
                           _ColorDot(
                             label: 'B',
                             color: selectedBgColor ?? Colors.transparent,
                             onTap: () async {
-                              final c = await showColorPickerDialog(
+                              final c = await _showColorPicker(
                                 context,
                                 selectedBgColor ?? Colors.transparent,
-                                title: Text(AppStrings.of(context, 'bgColor')),
-                                enableOpacity: true,
                               );
-                              setState(() => selectedBgColor = c);
+                              if (c != null) {
+                                setState(() => selectedBgColor = c);
+                              }
                             },
                           ),
                         ],
@@ -186,8 +176,6 @@ class _EditPageState extends State<EditPage> {
                     ],
                   ),
                 ),
-
-                // ===== 日志列表（可拖动）=====
                 Expanded(
                   child: ReorderableListView.builder(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -195,9 +183,15 @@ class _EditPageState extends State<EditPage> {
                     itemCount: provider.logs.length,
                     itemBuilder: (context, index) {
                       final LogEntry log = provider.logs[index];
+                      // Find category model for color
+                      final categoryModel = provider.categories.firstWhere(
+                          (c) => c.name == log.category,
+                          orElse: () => CategoryModel(
+                              name: log.category,
+                              colorValue: Colors.grey.value));
 
                       return ListTile(
-                        key: ValueKey(log.id), // 必须
+                        key: ValueKey(log.id),
                         leading: Container(
                           width: 4,
                           color: log.backgroundColor != null
@@ -212,30 +206,42 @@ class _EditPageState extends State<EditPage> {
                                 : Colors.white,
                           ),
                         ),
-                        subtitle: Text(
-                          log.category,
-                          style: const TextStyle(color: Colors.white60),
+                        subtitle: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: categoryModel.color.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                    color:
+                                        categoryModel.color.withOpacity(0.5)),
+                              ),
+                              child: Text(
+                                log.category,
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 10),
+                              ),
+                            ),
+                          ],
                         ),
                         onTap: () => _enterEdit(log),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // 删除按钮
                             IconButton(
                               icon: const Icon(Icons.delete_outline),
                               color: Colors.redAccent.withOpacity(0.8),
-                              tooltip: AppStrings.get(context, 'delete'),
+                              tooltip: AppStrings.of(context, 'delete'),
                               onPressed: () {
                                 context.read<LogProvider>().removeLog(log.id);
-
-                                // 如果正在编辑当前项，顺便重置表单
                                 if (editingId == log.id) {
                                   _resetForm();
                                 }
                               },
                             ),
-
-                            // 拖拽手柄
                             const Icon(
                               Icons.drag_handle,
                               color: Colors.white70,
@@ -254,7 +260,33 @@ class _EditPageState extends State<EditPage> {
     );
   }
 
-  // ===== 行为方法（保持原样）=====
+  Future<Color?> _showColorPicker(BuildContext context, Color currentColor) {
+    return showDialog<Color>(
+      context: context,
+      builder: (ctx) {
+        Color tempColor = currentColor;
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          content: SingleChildScrollView(
+            child: ThreeBarColorPicker(
+              color: currentColor,
+              onChanged: (c) => tempColor = c,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(AppStrings.of(context, 'cancel')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, tempColor),
+              child: Text(AppStrings.of(context, 'confirm')),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void _saveOrUpdate() {
     final provider = context.read<LogProvider>();
@@ -278,7 +310,6 @@ class _EditPageState extends State<EditPage> {
       );
       provider.updateLog(updated);
     }
-
     _resetForm();
   }
 
@@ -318,7 +349,8 @@ class _EditPageState extends State<EditPage> {
             onPressed: () {
               final text = _categoryController.text.trim();
               if (text.isNotEmpty) {
-                provider.addCategory(text);
+                // Temporary default color
+                provider.addCategory(text, Colors.grey.value);
                 setState(() => selectedCategory = text);
               }
               _categoryController.clear();
@@ -331,8 +363,6 @@ class _EditPageState extends State<EditPage> {
     );
   }
 }
-
-// ===== 小组件：颜色点（保持原样）=====
 
 class _ColorDot extends StatelessWidget {
   final String label;
