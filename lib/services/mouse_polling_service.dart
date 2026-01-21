@@ -16,7 +16,7 @@ class MousePollingService {
 
   void start() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) async {
+    _timer = Timer.periodic(const Duration(milliseconds: 300), (timer) async {
       await _checkMouse();
     });
   }

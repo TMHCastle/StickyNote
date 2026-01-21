@@ -304,7 +304,7 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
                           shape: BoxShape.circle,
                           border:
                               Border.all(color: Colors.white.withOpacity(0.2)),
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(color: Colors.black26, blurRadius: 4)
                           ],
                         ),
