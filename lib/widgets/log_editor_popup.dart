@@ -207,43 +207,82 @@ class _LogEditorPopupState extends State<LogEditorPopup> {
            
           const SizedBox(height: 20),
            
-           // Actions
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                final text = _controller.text.trim();
-                if (text.isEmpty) return;
+          // Actions
+          Row(
+            children: [
+              if (widget.log != null) ...[
+                IconButton(
+                  onPressed: () {
+                    if (widget.log != null) {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text(AppStrings.get(context, 'delete')),
+                          content:
+                              Text(AppStrings.get(context, 'deleteLogConfirm')),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              child: Text(AppStrings.get(context, 'cancel'),
+                                  style: const TextStyle(color: Colors.grey)),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                provider.removeLog(widget.log!.id);
+                                Navigator.of(ctx).pop();
+                                widget.onClose();
+                              },
+                              child: Text(AppStrings.get(context, 'confirm'),
+                                  style: const TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                  icon:
+                      const Icon(Icons.delete_outline, color: Colors.redAccent),
+                  tooltip: AppStrings.get(context, 'delete'),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    final text = _controller.text.trim();
+                    if (text.isEmpty) return;
 
-                if (widget.log == null) {
-                  provider.addLog(text,
-                      category: _category,
-                      color: _color?.value,
-                      backgroundColor: _bgColor?.value);
-                } else {
-                  final updated = widget.log!.copyWith(
-                      title: text,
-                      category: _category,
-                      color: _color?.value,
-                      backgroundColor: _bgColor?.value);
-                  provider.updateLog(updated);
-                }
-                widget.onClose();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-                elevation: 0,
+                    if (widget.log == null) {
+                      provider.addLog(text,
+                          category: _category,
+                          color: _color?.value,
+                          backgroundColor: _bgColor?.value);
+                    } else {
+                      final updated = widget.log!.copyWith(
+                          title: text,
+                          category: _category,
+                          color: _color?.value,
+                          backgroundColor: _bgColor?.value);
+                      provider.updateLog(updated);
+                    }
+                    widget.onClose();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                      widget.log == null
+                          ? AppStrings.get(context, 'add')
+                          : AppStrings.get(context, 'edit'),
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
               ),
-              child: Text(
-                  widget.log == null
-                      ? AppStrings.get(context, 'add')
-                      : AppStrings.get(context, 'edit'),
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-            ),
+            ],
           ),
         ],
       ),

@@ -117,6 +117,10 @@ class AppStrings {
       'zh': '您确定要删除此标签吗？',
       'en': 'Delete this tag?',
     },
+    'deleteLogConfirm': {
+      'zh': '确定要删除这条日志吗？',
+      'en': 'Are you sure you want to delete this log?',
+    },
     'deleteAction': {
       'zh': '删除标签及日志',
       'en': 'Delete Tag & Logs',
