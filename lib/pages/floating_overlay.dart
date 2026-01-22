@@ -300,7 +300,8 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.4),
+                          color:
+                              Colors.black.withOpacity(provider.controlOpacity),
                           shape: BoxShape.circle,
                           border:
                               Border.all(color: Colors.white.withOpacity(0.2)),
@@ -361,7 +362,7 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withOpacity(provider.controlOpacity),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white.withOpacity(0.2)),
                     boxShadow: [
