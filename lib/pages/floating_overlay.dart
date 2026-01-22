@@ -158,42 +158,45 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
                   if (index == provider.logs.length) {
                     // === Footer: Add Button ===
                     // Not wrapped in ReorderableDragStartListener -> Not Draggable
-                    return Container(
+                    return Opacity(
                       key: const ValueKey('add_button_footer'),
-                      margin: const EdgeInsets.only(top: 8, bottom: 20),
-                      alignment: Alignment.center,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: () => _openEditor(null),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                      color: Colors.white.withOpacity(0.2)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.add_circle,
-                                        size: 16,
-                                        color: Colors.white.withOpacity(0.9)),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      AppStrings.get(context, 'addLog'),
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13),
-                                    ),
-                                  ],
+                      opacity: provider.controlOpacity,
+                      child: Container(
+                        margin: const EdgeInsets.only(top: 8, bottom: 20),
+                        alignment: Alignment.center,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () => _openEditor(null),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                        color: Colors.white.withOpacity(0.2)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.add_circle,
+                                          size: 16,
+                                          color: Colors.white.withOpacity(0.9)),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        AppStrings.get(context, 'addLog'),
+                                        style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -213,6 +216,8 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
                         log: log,
                         noteOpacity: provider.noteBgOpacity,
                         fontSize: provider.fontSize,
+                        textOpacity: provider.textOpacity,
+                        controlOpacity: provider.controlOpacity,
                         onEdit: (l) {
                           final RenderBox? box =
                               ctx.findRenderObject() as RenderBox?;
@@ -286,61 +291,66 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
             left: 16,
             child: GestureDetector(
               onPanStart: (_) => windowManager.startDragging(),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      key: _lockButtonKey,
-                      onTap: () async {
-                        await provider.toggleLocked();
-                      },
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color:
-                              Colors.black.withOpacity(provider.controlOpacity),
-                          shape: BoxShape.circle,
-                          border:
-                              Border.all(color: Colors.white.withOpacity(0.2)),
-                          boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 4)
-                          ],
-                        ),
-                        child: Icon(
-                          provider.locked ? Icons.lock : Icons.lock_open,
-                          size: 16,
-                          color: Colors.white,
+              child: GestureDetector(
+                onPanStart: (_) => windowManager.startDragging(),
+                child: Opacity(
+                  opacity: provider.controlOpacity,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          key: _lockButtonKey,
+                          onTap: () async {
+                            await provider.toggleLocked();
+                          },
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.4),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.2)),
+                              boxShadow: const [
+                                BoxShadow(color: Colors.black26, blurRadius: 4)
+                              ],
+                            ),
+                            child: Icon(
+                              provider.locked ? Icons.lock : Icons.lock_open,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 70,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: Text(
-                        provider.locked
-                            ? AppStrings.get(context, 'unlockInTray')
-                            : AppStrings.get(context, 'clickToLock'),
-                        key: ValueKey('lock_text_${provider.locked}'),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 70,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: Text(
+                            provider.locked
+                                ? AppStrings.get(context, 'unlockInTray')
+                                : AppStrings.get(context, 'clickToLock'),
+                            key: ValueKey('lock_text_${provider.locked}'),
                           style: TextStyle(
-                          fontSize: 14,
+                              fontSize: 14,
                             fontWeight: FontWeight.w500,
-                          color: Colors.white.withOpacity(0.8),
-                          shadows: [
-                            Shadow(
-                                color: Colors.black.withOpacity(0.5),
-                                blurRadius: 2)
-                          ],
+                              color: Colors.white.withOpacity(0.8),
+                              shadows: [
+                                Shadow(
+                                    color: Colors.black.withOpacity(0.5),
+                                    blurRadius: 2)
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -349,30 +359,33 @@ class _FloatingOverlayState extends State<FloatingOverlay> {
           Positioned(
             top: 16,
             right: 16,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _showSettings = !_showSettings;
-                    _showEditor = false;
-                  });
-                },
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(provider.controlOpacity),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.2)),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black26, blurRadius: 4)
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.settings,
-                    size: 18,
-                    color: Colors.white,
+            child: Opacity(
+              opacity: provider.controlOpacity,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showSettings = !_showSettings;
+                      _showEditor = false;
+                    });
+                  },
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black26, blurRadius: 4)
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.settings,
+                      size: 18,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),

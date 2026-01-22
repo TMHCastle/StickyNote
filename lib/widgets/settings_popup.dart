@@ -16,6 +16,7 @@ class SettingsPopup extends StatefulWidget {
 
 class _SettingsPopupState extends State<SettingsPopup> {
   bool _isAdvancedExpanded = false;
+  bool _isNoteSettingsExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +45,7 @@ class _SettingsPopupState extends State<SettingsPopup> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Basic Settings
+            // 1. Basic Settings (Language & Sort)
             _buildBasicSettings(context, provider, textColor),
 
             const Divider(color: Colors.white12, height: 1),
@@ -54,7 +55,42 @@ class _SettingsPopupState extends State<SettingsPopup> {
 
             const Divider(color: Colors.white12, height: 1),
 
-            // 3. Advanced Settings
+            // 3. Note Settings (Foldable)
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _isNoteSettingsExpanded = !_isNoteSettingsExpanded;
+                });
+              },
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Text(
+                      AppStrings.get(context, 'noteSettings'),
+                      style: TextStyle(
+                          color: textColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      _isNoteSettingsExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: textColor,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (_isNoteSettingsExpanded)
+              _buildNoteSettings(context, provider, textColor),
+
+            const Divider(color: Colors.white12, height: 1),
+
+            // 4. Control Settings (Foldable)
             InkWell(
               onTap: () {
                 setState(() {
@@ -62,11 +98,12 @@ class _SettingsPopupState extends State<SettingsPopup> {
                 });
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     Text(
-                      AppStrings.get(context, 'advancedSettings'),
+                      AppStrings.get(context, 'controlSettings'),
                       style: TextStyle(
                           color: textColor,
                           fontSize: 14,
@@ -84,21 +121,22 @@ class _SettingsPopupState extends State<SettingsPopup> {
               ),
             ),
             if (_isAdvancedExpanded)
-              _buildAdvancedSettings(context, provider, textColor),
+              _buildControlSettings(context, provider, textColor),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBasicSettings(BuildContext context, LogProvider provider, Color textColor) {
+Widget _buildBasicSettings(
+      BuildContext context, LogProvider provider, Color textColor) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Language
-           _buildDropdownRow(
+          _buildDropdownRow(
             context,
             label: AppStrings.get(context, 'language'),
             textColor: textColor,
@@ -114,7 +152,7 @@ class _SettingsPopupState extends State<SettingsPopup> {
             },
           ),
           const SizedBox(height: 12),
-          
+
           // Sort Order
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -150,8 +188,18 @@ class _SettingsPopupState extends State<SettingsPopup> {
               )
             ],
           ),
-          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
 
+Widget _buildNoteSettings(
+      BuildContext context, LogProvider provider, Color textColor) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           // Font Size
           _buildSlider(
             label:
@@ -162,106 +210,43 @@ class _SettingsPopupState extends State<SettingsPopup> {
             onChanged: provider.setFontSize,
             textColor: textColor,
           ),
-          
           const SizedBox(height: 12),
-           
+
+          // Note Opacity
           _buildSlider(
-            label: AppStrings.get(context, 'bgOpacity'),
-            value: provider.bgOpacity,
+            label: AppStrings.get(context, 'noteOpacity'),
+            value: provider.noteBgOpacity,
             min: 0.0,
             max: 1.0,
-            onChanged: provider.setBgOpacity,
+            onChanged: provider.setNoteBgOpacity,
             textColor: textColor,
           ),
-          
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(AppStrings.get(context, 'useBgImage'),
-                style: TextStyle(color: textColor, fontSize: 13)),
-            value: provider.useBackgroundImage,
-            onChanged: provider.setUseBackgroundImage,
-            activeColor: Colors.blueAccent,
-          ),
+          const SizedBox(height: 12),
 
-          if (!provider.useBackgroundImage || provider.backgroundImage == null)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(AppStrings.get(context, 'bgColor'),
-                  style: TextStyle(color: textColor, fontSize: 13)),
-              trailing: GestureDetector(
-                onTap: () async {
-                  _showColorPickerDialog(
-                      context, Color(provider.layoutBackgroundColor), (c) {
-                    provider.setLayoutBackgroundColor(c.value);
-                  });
-                },
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: Color(provider.layoutBackgroundColor),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(AppStrings.get(context, 'bgImage'),
-                style: TextStyle(color: textColor, fontSize: 13)),
-            subtitle: provider.backgroundImage != null
-                ? Text(
-                    provider.backgroundImage!
-                        .split(Platform.pathSeparator)
-                        .last,
-                    style: TextStyle(
-                        color: textColor.withOpacity(0.6), fontSize: 11),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                : Text(AppStrings.get(context, 'noImageSet'),
-                    style: TextStyle(
-                        color: textColor.withOpacity(0.5), fontSize: 11)),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.upload_file, size: 20),
-                  color: textColor.withOpacity(0.8),
-                  onPressed: () async {
-                    final result = await FilePicker.platform
-                        .pickFiles(type: FileType.image);
-                    if (result != null && result.files.isNotEmpty) {
-                      provider.setBackgroundImage(result.files.single.path!);
-                    }
-                  },
-                ),
-                if (provider.backgroundImage != null)
-                  IconButton(
-                    icon: const Icon(Icons.delete, size: 20),
-                    color: textColor.withOpacity(0.8),
-                    onPressed: provider.removeBackgroundImage,
-                  ),
-              ],
-            ),
+          // Text Opacity
+          _buildSlider(
+            label: AppStrings.get(context, 'textOpacity'),
+            value: provider.textOpacity,
+            min: 0.1,
+            max: 1.0,
+            onChanged: provider.setTextOpacity,
+            textColor: textColor,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTagManagement(
+Widget _buildTagManagement(
       BuildContext context, LogProvider provider, Color textColor) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(AppStrings.get(context, 'manageTags'), 
+              Text(AppStrings.get(context, 'manageTags'),
                   style: TextStyle(
                       color: textColor,
                       fontSize: 14,
@@ -277,7 +262,6 @@ class _SettingsPopupState extends State<SettingsPopup> {
             ],
           ),
           const SizedBox(height: 8),
-          
           Container(
             constraints: const BoxConstraints(maxHeight: 150),
             decoration: BoxDecoration(
@@ -330,34 +314,116 @@ class _SettingsPopupState extends State<SettingsPopup> {
     );
   }
 
-  Widget _buildAdvancedSettings(
+Widget _buildControlSettings(
       BuildContext context, LogProvider provider, Color textColor) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
         children: [
-          _buildSlider(
-            label: AppStrings.get(context, 'noteOpacity'),
-            value: provider.noteBgOpacity,
-            min: 0.0,
-            max: 1.0,
-            onChanged: provider.setNoteBgOpacity,
-            textColor: textColor,
-          ),
+          // Control Opacity
           _buildSlider(
             label: AppStrings.get(context, 'controlOpacity'),
             value: provider.controlOpacity,
-            min: 0.1,
+            min: 0.0,
             max: 1.0,
             onChanged: provider.setControlOpacity,
             textColor: textColor,
           ),
-          ],
-        ),
-      );
+          const SizedBox(height: 12),
+
+          // Bg Opacity
+          _buildSlider(
+            label: AppStrings.get(context, 'bgOpacity'),
+            value: provider.bgOpacity,
+            min: 0.0,
+            max: 1.0,
+            onChanged: provider.setBgOpacity,
+            textColor: textColor,
+          ),
+          const SizedBox(height: 12),
+
+          // Background Image Switch
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(AppStrings.get(context, 'useBgImage'),
+                style: TextStyle(color: textColor, fontSize: 13)),
+            value: provider.useBackgroundImage,
+            onChanged: provider.setUseBackgroundImage,
+            activeColor: Colors.blueAccent,
+          ),
+
+          // Bg Color Picker
+          if (!provider.useBackgroundImage || provider.backgroundImage == null)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(AppStrings.get(context, 'bgColor'),
+                  style: TextStyle(color: textColor, fontSize: 13)),
+              trailing: GestureDetector(
+                onTap: () async {
+                  _showColorPickerDialog(
+                      context, Color(provider.layoutBackgroundColor), (c) {
+                    provider.setLayoutBackgroundColor(c.value);
+                  });
+                },
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Color(provider.layoutBackgroundColor),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+
+          // Bg Image Picker
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(AppStrings.get(context, 'bgImage'),
+                style: TextStyle(color: textColor, fontSize: 13)),
+            subtitle: provider.backgroundImage != null
+                ? Text(
+                    provider.backgroundImage!
+                        .split(Platform.pathSeparator)
+                        .last,
+                    style: TextStyle(
+                        color: textColor.withOpacity(0.6), fontSize: 11),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : Text(AppStrings.get(context, 'noImageSet'),
+                    style: TextStyle(
+                        color: textColor.withOpacity(0.5), fontSize: 11)),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.upload_file, size: 20),
+                  color: textColor.withOpacity(0.8),
+                  onPressed: () async {
+                    final result = await FilePicker.platform
+                        .pickFiles(type: FileType.image);
+                    if (result != null && result.files.isNotEmpty) {
+                      provider.setBackgroundImage(result.files.single.path!);
+                    }
+                  },
+                ),
+                if (provider.backgroundImage != null)
+                  IconButton(
+                    icon: const Icon(Icons.delete, size: 20),
+                    color: textColor.withOpacity(0.8),
+                    onPressed: provider.removeBackgroundImage,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildSlider({
+Widget _buildSlider({
     required String label,
     required double value,
     required double min,

@@ -38,6 +38,7 @@ class LogProvider extends ChangeNotifier {
         box.get('useBackgroundImage', defaultValue: _backgroundImage != null);
     _borderRadius = box.get('borderRadius', defaultValue: 12.0);
     _noteBgOpacity = box.get('noteBgOpacity', defaultValue: 0.5);
+    _textOpacity = box.get('textOpacity', defaultValue: 1.0);
     _noteBgColor = box.get('noteBgColor', defaultValue: Colors.black.value);
     
     // 语言设置
@@ -146,6 +147,14 @@ class LogProvider extends ChangeNotifier {
     _useBackgroundImage = false;
     box.delete('backgroundImage');
     box.put('useBackgroundImage', false);
+    notifyListeners();
+  }
+
+  double _textOpacity = 1.0;
+  double get textOpacity => _textOpacity;
+  void setTextOpacity(double v) {
+    _textOpacity = v.clamp(0.0, 1.0);
+    box.put('textOpacity', _textOpacity);
     notifyListeners();
   }
 

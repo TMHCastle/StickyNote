@@ -38,8 +38,20 @@ class AppStrings {
     },
     'bgOpacity': {
       'zh': '背景不透明度',
-      'en':
-          'Details Opacity', // "Background" contextually means the panel background
+      'en': 'Details Opacity',
+    },
+
+    'controlSettings': {
+      'zh': '控件设置',
+      'en': 'Control Settings',
+    },
+    'noteSettings': {
+      'zh': '便签设置',
+      'en': 'Note Settings',
+    },
+    'textOpacity': {
+      'zh': '文字不透明度',
+      'en': 'Text Opacity',
     },
     'bgColor': {
       'zh': '背景颜色',

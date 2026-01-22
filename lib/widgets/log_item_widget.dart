@@ -8,6 +8,8 @@ class LogItemWidget extends StatelessWidget {
   final LogEntry log;
   final double noteOpacity;
   final double fontSize;
+  final double textOpacity;
+  final double controlOpacity;
   final Function(LogEntry) onEdit;
 
   const LogItemWidget({
@@ -15,6 +17,8 @@ class LogItemWidget extends StatelessWidget {
     required this.log,
     this.noteOpacity = 1.0,
     this.fontSize = 14.0,
+    this.textOpacity = 1.0,
+    this.controlOpacity = 1.0,
     required this.onEdit,
   });
 
@@ -106,7 +110,7 @@ class LogItemWidget extends StatelessWidget {
                             categoryName,
                             style: TextStyle(
                                 fontSize: 10,
-                                color: tagTextColor,
+                                color: tagTextColor.withOpacity(textOpacity),
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -116,11 +120,12 @@ class LogItemWidget extends StatelessWidget {
                           style: TextStyle(
                             decoration:
                                 log.done ? TextDecoration.lineThrough : null,
-                            color: log.color != null
-                                ? Color(log.color!)
-                                : (baseColor.computeLuminance() > 0.5
-                                    ? Colors.black87
-                                    : Colors.white),
+                            color: (log.color != null
+                                    ? Color(log.color!)
+                                    : (baseColor.computeLuminance() > 0.5
+                                        ? Colors.black87
+                                        : Colors.white))
+                                .withOpacity(textOpacity),
                             fontSize: fontSize,
                             fontWeight: FontWeight.w500,
                           ),
@@ -140,9 +145,10 @@ class LogItemWidget extends StatelessWidget {
             child: Icon(
               Icons.edit,
               size: 16, 
-              color: baseColor.computeLuminance() > 0.5
-                  ? Colors.black38
-                  : Colors.white38,
+              color: (baseColor.computeLuminance() > 0.5
+                      ? Colors.black
+                      : Colors.white)
+                  .withOpacity(controlOpacity),
             ),
           ),
         ],
